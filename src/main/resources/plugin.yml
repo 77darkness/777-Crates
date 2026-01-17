@@ -1,0 +1,23 @@
+name: 777-Crates
+version: '1.0-devbuild'
+author: "77darkness"
+main: me.darkness.crates.CratesPlugin
+description: "Advanced crates plugin"
+website: "https://777code.pl"
+api-version: '1.20'
+softdepend:
+  - DecentHolograms
+
+commands:
+  admincrate:
+    aliases:
+      - 777crate
+      - crate
+  battle:
+    aliases:
+      - casebattle
+      - bitwa
+
+permissions:
+  777crates.admin:
+    default: op
