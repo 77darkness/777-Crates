@@ -17,16 +17,6 @@ public class MassOpenInvConfig extends OkaeriConfig {
     private Map<String, GuiItem> createDefaultItems() {
         Map<String, GuiItem> m = new LinkedHashMap<>();
 
-        for (int i = 0; i < 27; i++) {
-            m.put("bg" + i, new GuiItem(
-                Material.GRAY_STAINED_GLASS_PANE,
-                i,
-                " ",
-                List.of(),
-                "NONE"
-            ));
-        }
-
         m.put("open_2", new GuiItem(
             Material.TRIPWIRE_HOOK,
             11,
@@ -113,3 +103,4 @@ public class MassOpenInvConfig extends OkaeriConfig {
         }
     }
 }
+
