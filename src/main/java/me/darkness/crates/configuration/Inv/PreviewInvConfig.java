@@ -18,16 +18,16 @@ public class PreviewInvConfig extends OkaeriConfig {
     );
 
     private Map<String, GuiItem> createDefaultItems() {
-        Map<String, GuiItem> defaultItems = new LinkedHashMap<>();
+        Map<String, GuiItem> m = new LinkedHashMap<>();
 
-        defaultItems.put("open_animated", new GuiItem(
+        m.put("open_animated", new GuiItem(
             Material.GREEN_BANNER,
             46,
             "&#00FF00&lᴏᴛᴡóʀᴢ ᴢ ᴀɴɪᴍᴀᴄᴊᴀ",
             List.of("&8» &fᴋʟɪᴋɴɪᴊ, ᴀʙʏ ᴏᴛᴡᴏʀᴢʏć"),
             "OPEN_ANIMATED"
         ));
-        defaultItems.put("open_animatedd", new GuiItem(
+        m.put("open_animatedd", new GuiItem(
              Material.GREEN_BANNER,
              47,
              "&#00FF00&lᴏᴛᴡóʀᴢ ᴢ ᴀɴɪᴍᴀᴄᴊᴀ",
@@ -35,14 +35,14 @@ public class PreviewInvConfig extends OkaeriConfig {
              "OPEN_ANIMATED"
         ));
 
-        defaultItems.put("open_without_animation", new GuiItem(
+        m.put("open_without_animation", new GuiItem(
             Material.PURPLE_BANNER,
             51,
             "&#DD00FF&lᴏᴛᴡóʀᴢ ʙᴇᴢ ᴀɴɪᴍᴀᴄᴊɪ",
             List.of("&8» &fᴋʟɪᴋɴɪᴊ, ᴀʙʏ ᴏᴛᴡᴏʀᴢʏć"),
             "OPEN_WITHOUT_ANIMATION"
         ));
-        defaultItems.put("open_without_animatioon", new GuiItem(
+        m.put("open_without_animatioon", new GuiItem(
             Material.PURPLE_BANNER,
             52,
             "&#DD00FF&lᴏᴛᴡóʀᴢ ʙᴇᴢ ᴀɴɪᴍᴀᴄᴊɪ",
@@ -50,7 +50,7 @@ public class PreviewInvConfig extends OkaeriConfig {
             "OPEN_WITHOUT_ANIMATION"
         ));
 
-        defaultItems.put("mass_open", new GuiItem(
+        m.put("mass_open", new GuiItem(
             Material.CHEST_MINECART,
             49,
             "&#FF8600&lᴏᴛᴡᴀʀᴄɪᴇ ᴍᴀꜱᴏᴡᴇ",
@@ -58,7 +58,7 @@ public class PreviewInvConfig extends OkaeriConfig {
             "MASS_OPEN"
         ));
 
-        return defaultItems;
+        return m;
     }
 
     public static class GuiItem extends OkaeriConfig {
