@@ -25,9 +25,9 @@ public class EditInvConfig extends OkaeriConfig {
     );
 
     private Map<String, GuiItem> createDefaultItems() {
-        Map<String, GuiItem> defaultItems = new LinkedHashMap<>();
+        Map<String, GuiItem> m = new LinkedHashMap<>();
 
-        defaultItems.put("close", new GuiItem(
+        m.put("close", new GuiItem(
             Material.BARRIER,
             49,
             "&#FF0000&lᴢᴀᴍᴋɴɪᴊ",
@@ -35,7 +35,7 @@ public class EditInvConfig extends OkaeriConfig {
             "CLOSE"
         ));
 
-        return defaultItems;
+        return m;
     }
 
     public static class GuiItem extends OkaeriConfig {
