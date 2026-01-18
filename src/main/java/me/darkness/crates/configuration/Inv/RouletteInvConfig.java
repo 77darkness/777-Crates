@@ -17,9 +17,9 @@ public class RouletteInvConfig extends OkaeriConfig {
     public Map<String, GuiItem> items = this.createDefaultItems();
 
     private Map<String, GuiItem> createDefaultItems() {
-        Map<String, GuiItem> defaultItems = new LinkedHashMap<>();
+        Map<String, GuiItem> m = new LinkedHashMap<>();
 
-        defaultItems.put("wygrana", new GuiItem(
+        m.put("wygrana", new GuiItem(
             Material.SPECTRAL_ARROW,
             4,
             "&#FFE300&l↓↓↓ ᴡʏɢʀᴀɴᴀ ↓↓↓",
@@ -27,7 +27,7 @@ public class RouletteInvConfig extends OkaeriConfig {
             "NONE"
         ));
 
-        defaultItems.put("wygranaa", new GuiItem(
+        m.put("wygranaa", new GuiItem(
             Material.SPECTRAL_ARROW,
             22,
             "&#FFE300&l↑↑↑ ᴡʏɢʀᴀɴᴀ ↑↑↑",
@@ -40,7 +40,7 @@ public class RouletteInvConfig extends OkaeriConfig {
             if (reserved.contains(i)) {
                 continue;
             }
-            defaultItems.put("bg" + i, new GuiItem(
+            m.put("bg" + i, new GuiItem(
                 Material.GRAY_STAINED_GLASS_PANE,
                 i,
                 " ",
@@ -49,7 +49,7 @@ public class RouletteInvConfig extends OkaeriConfig {
             ));
         }
 
-        return defaultItems;
+        return m;
     }
 
     public static class GuiItem extends OkaeriConfig {
