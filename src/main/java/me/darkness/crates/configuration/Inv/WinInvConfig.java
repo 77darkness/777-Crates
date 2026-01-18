@@ -17,9 +17,9 @@ public class WinInvConfig extends OkaeriConfig {
     public Map<String, GuiItem> items = createDefaultItems();
 
     private static Map<String, GuiItem> createDefaultItems() {
-        Map<String, GuiItem> map = new LinkedHashMap<>();
+        Map<String, GuiItem> m = new LinkedHashMap<>();
 
-        map.put("reopen", new GuiItem(
+        m.put("reopen", new GuiItem(
             Material.LIME_DYE,
             15,
             "&#00FF00&lᴏᴛᴡóʀᴢ ᴘᴏɴᴏᴡɴɪᴇ",
@@ -27,7 +27,7 @@ public class WinInvConfig extends OkaeriConfig {
             "REOPEN"
         ));
 
-        return map;
+        return m;
     }
 
     public static class GuiItem extends OkaeriConfig {
