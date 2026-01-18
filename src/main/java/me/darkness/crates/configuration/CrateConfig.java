@@ -3,8 +3,10 @@ package me.darkness.crates.configuration;
 import eu.okaeri.configs.OkaeriConfig;
 import me.darkness.crates.CratesPlugin;
 import me.darkness.crates.crate.key.KeyService;
+import me.darkness.crates.util.ItemBuilder;
 import me.darkness.crates.util.TextUtil;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -30,7 +32,7 @@ public class CrateConfig extends OkaeriConfig {
         public List<String> lines;
 
         public Hologram() {
-            this.lines = new ArrayList<>(java.util.List.of(
+            this.lines = new ArrayList<>(List.of(
                 "&#F6D365&ltest",
                 "&#F6D365• &fᴋʟɪᴋɴɪᴊ, ᴀʙʏ ᴏᴛᴡᴏʀᴢʏć",
                 "&#FFF073ᴋᴜᴘ ᴋʟᴜᴄᴢᴇ: /ᴘᴏʀᴛꜰᴇʟ"
@@ -46,43 +48,44 @@ public class CrateConfig extends OkaeriConfig {
         public boolean giveItem = true;
     }
 
-    public static CrateConfig createDefault(CratesPlugin plugin, String crateName, org.bukkit.Location location) {
+    public static CrateConfig createDefault(CratesPlugin plugin, String crateName, Location location) {
         CrateConfig config = new CrateConfig();
         config.name = crateName;
         config.displayName = TextUtil.color("&#F6D365" + crateName);
         config.animationType = "roulette";
 
-        config.locations = new java.util.ArrayList<>();
+        config.locations = new ArrayList<>();
         if (location != null) {
             config.locations.add(location);
         }
 
-        org.bukkit.inventory.ItemStack key = new org.bukkit.inventory.ItemStack(org.bukkit.Material.TRIPWIRE_HOOK);
-        org.bukkit.inventory.meta.ItemMeta meta = key.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(TextUtil.color("&#F6D365Klucz do skrzynki " + crateName));
-            meta.setLore(java.util.List.of(
-                TextUtil.color("&8ɪɴꜰᴏʀᴍᴀᴄᴊᴇ"),
-                TextUtil.color("&f"),
-                TextUtil.color("&8× &fTym kluczem otworzysz skrzynkę &#F6D365" + crateName),
-                TextUtil.color("&f"),
-                TextUtil.color("&#F6D365→ /warp skrzynki")
+        ItemBuilder keyBuilder = ItemBuilder.of(Material.TRIPWIRE_HOOK)
+            .name("&#F6D365Klucz do skrzynki " + crateName)
+            .lore(List.of(
+                "&8ɪɴꜰᴏʀᴍᴀᴄᴊᴇ",
+                "&f",
+                "&8× &fTym kluczem otworzysz skrzynkę &#F6D365" + crateName,
+                "&f",
+                "&#F6D365→ /warp skrzynki"
             ));
-            key.setItemMeta(meta);
+
+        if (config.keyCustomModelData != null) {
+            keyBuilder.customModelData(config.keyCustomModelData);
         }
+
         KeyService keyService = plugin.getKeyServiceProvider().get();
-        config.key = keyService.tagKey(key, crateName);
+        config.key = keyService.tagKey(keyBuilder.build(), crateName);
 
         config.hologram = new Hologram();
         config.hologram.enabled = true;
         config.hologram.height = 2.1;
-        config.hologram.lines = new java.util.ArrayList<>(java.util.List.of(
+        config.hologram.lines = new ArrayList<>(List.of(
             "&#F6D365&l" + crateName,
             "&#F6D365• &fᴋʟɪᴋɴɪᴊ, ᴀʙʏ ᴏᴛᴡᴏʀᴢʏć",
             "&#FFF073ᴋᴜᴘ ᴋʟᴜᴄᴢᴇ: /ᴘᴏʀᴛꜰᴇʟ"
         ));
 
-        config.rewards = new java.util.ArrayList<>();
+        config.rewards = new ArrayList<>();
         return config;
     }
 }
