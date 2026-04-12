@@ -284,7 +284,7 @@ public final class EditInv {
     private ItemStack stripTempLore(ItemStack item) {
         if (item == null) return null;
         Integer count = ItemNbt.get(item, tempLoreKey, PersistentDataType.INTEGER);
-        if (count == null || count <= 0) return item;
+        if (count == null || count <= 0) return stripGuiTag(item);
 
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
@@ -294,6 +294,18 @@ public final class EditInv {
             meta.lore(lore.subList(0, lore.size() - count));
         }
         meta.getPersistentDataContainer().remove(tempLoreKey);
+        item.setItemMeta(meta);
+        return stripGuiTag(item);
+    }
+
+    private ItemStack stripGuiTag(ItemStack item) {
+        if (item == null) return null;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        meta.getPersistentDataContainer().getKeys()
+                .stream()
+                .filter(key -> key.getKey().equals("mf-gui"))
+                .forEach(key -> meta.getPersistentDataContainer().remove(key));
         item.setItemMeta(meta);
         return item;
     }

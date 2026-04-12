@@ -11,6 +11,7 @@ import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.battle.BattleService;
 import me.darkness.crates.crate.battle.BattleSession;
 import me.darkness.crates.crate.battle.Challenge;
+import me.darkness.crates.crate.battle.OpenChallenge;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -49,6 +50,109 @@ public final class ConfirmInv {
         if (crate == null) { target.closeInventory(); return; }
 
         openInternal(target, challenger, crate, challenge.getAmount(), false, challenge);
+    }
+
+    public void openForCreateOpen(Player creator) {
+        BattleSession session = service.getSession(creator.getUniqueId());
+        if (session == null) return;
+
+        Crate crate = service.findCrate(session.getCrateName()).orElse(null);
+        if (crate == null) { creator.closeInventory(); return; }
+
+        openInternalOpen(creator, crate, session.getAmount(), true, null);
+    }
+
+    public void openForJoinOpen(Player joiner, Player creator, Crate crate, OpenChallenge battle) {
+        openInternalOpen(joiner, crate, battle.getAmount(), false, battle);
+    }
+
+    private void openInternalOpen(Player viewer, Crate crate, int amount, boolean isCreate, OpenChallenge battle) {
+        ConfirmInvConfig cfg = this.plugin.getConfigService().getBattleConfirmInv();
+        int rows = Math.max(1, Math.min(6, cfg.rows));
+        int size = rows * 9;
+
+        Map<String, String> ph = Map.of(
+                "crate", crate.getDisplayName(),
+                "amount", String.valueOf(amount),
+                "opponent", isCreate ? "Otwarta bitwa" : (battle != null ? plugin.getServer().getOfflinePlayer(battle.getCreator()).getName() : "?"),
+                "need", String.valueOf(amount)
+        );
+
+        Gui gui = Gui.gui()
+                .title(TextUtil.toComponent(isCreate ? cfg.titleChallenge : cfg.titleAccept))
+                .rows(rows)
+                .disableAllInteractions()
+                .create();
+
+        if (cfg.infoItem != null && cfg.infoItem.slot >= 0 && cfg.infoItem.slot < size) {
+            ItemStack icon = ItemBuilder.of(Objects.requireNonNullElse(cfg.infoItem.material, Material.CHEST))
+                    .amount(cfg.infoItem.amount)
+                    .placeholders(ph)
+                    .name(cfg.infoItem.name)
+                    .lore(cfg.infoItem.lore)
+                    .build();
+            gui.setItem(cfg.infoItem.slot, new GuiItem(icon, e -> e.setCancelled(true)));
+        }
+
+        if (cfg.items != null) {
+            cfg.items.values().forEach(item -> {
+                if (item == null || item.slot < 0 || item.slot >= size) return;
+                String action = item.action == null ? "NONE" : item.action.toUpperCase(Locale.ROOT);
+                ItemStack stack = ItemBuilder.of(Objects.requireNonNullElse(item.material, Material.BARRIER))
+                        .amount(item.amount)
+                        .placeholders(ph)
+                        .name(item.name)
+                        .lore(item.lore != null ? new ArrayList<>(item.lore) : new ArrayList<>())
+                        .build();
+                gui.setItem(item.slot, new GuiItem(stack, e -> {
+                    e.setCancelled(true);
+                    handleOpenAction(viewer, crate, amount, isCreate, battle, action);
+                }));
+            });
+        }
+
+        gui.open(viewer);
+    }
+
+    private void handleOpenAction(Player viewer, Crate crate, int amount, boolean isCreate,
+                                   OpenChallenge battle, String action) {
+        if ("DECLINE".equals(action)) {
+            viewer.closeInventory();
+            return;
+        }
+        if (!"ACCEPT".equals(action)) return;
+
+        viewer.playSound(viewer.getLocation(), Sound.UI_BUTTON_CLICK, 0.7f, 1.2f);
+
+        if (isCreate) {
+            int have = plugin.getKeyService().countKeys(viewer, crate.getName());
+            if (have < amount) {
+                service.noKeys(viewer, have, amount);
+                viewer.closeInventory();
+                return;
+            }
+            if (plugin.getRewardExecutor().countFreeSlots(viewer) < amount) {
+                lang().inventoryFull.send(viewer);
+                viewer.closeInventory();
+                return;
+            }
+            OpenChallenge open = new OpenChallenge(viewer.getUniqueId(), crate.getName(), amount);
+            service.addOpenChallenge(open);
+            lang().openBattleCreated.send(viewer, Map.of("crate", crate.getDisplayName(), "amount", String.valueOf(amount)));
+            viewer.closeInventory();
+        } else {
+            if (battle == null) { viewer.closeInventory(); return; }
+            Player creator = plugin.getServer().getPlayer(battle.getCreator());
+            if (creator == null) {
+                service.removeOpenChallenge(battle.getId());
+                lang().openBattleNoLongerAvailable.send(viewer);
+                viewer.closeInventory();
+                return;
+            }
+            viewer.closeInventory();
+            plugin.getServer().getScheduler().runTask(plugin, () ->
+                    service.startMatchFromOpen(battle, viewer));
+        }
     }
 
     private void openInternal(Player viewer, Player opponent, Crate crate, int amount, boolean isSend, Challenge challenge) {
@@ -150,7 +254,7 @@ public final class ConfirmInv {
         challenge.setStatus(Challenge.Status.ACCEPTED);
         lang.battleAccepted.send(viewer, Map.of("player", opponent.getName()));
         viewer.closeInventory();
-        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> service.startMatch(challenge));
+        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> service.startCountdown(challenge));
     }
 
     private Lang lang() {

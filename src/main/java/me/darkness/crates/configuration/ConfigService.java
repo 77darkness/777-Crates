@@ -12,6 +12,7 @@ import me.darkness.crates.configuration.Inv.MassOpenInvConfig;
 import me.darkness.crates.configuration.Inv.AmountInvConfig;
 import me.darkness.crates.configuration.Inv.ConfirmInvConfig;
 import me.darkness.crates.configuration.Inv.SelectInvConfig;
+import me.darkness.crates.configuration.Inv.OpenBattleInvConfig;
 
 import java.io.File;
 
@@ -29,6 +30,7 @@ public final class ConfigService {
     private SelectInvConfig selectInvConfig;
     private AmountInvConfig amountInvConfig;
     private ConfirmInvConfig confirmInvConfig;
+    private OpenBattleInvConfig openBattleInvConfig;
 
     public ConfigService(CratesPlugin plugin) {
         this.plugin = plugin;
@@ -47,6 +49,7 @@ public final class ConfigService {
         this.selectInvConfig = this.createConfig(SelectInvConfig.class, "gui" + File.separator + "select.yml");
         this.amountInvConfig = this.createConfig(AmountInvConfig.class, "gui" + File.separator + "amount.yml");
         this.confirmInvConfig = this.createConfig(ConfirmInvConfig.class, "gui" + File.separator + "confirm.yml");
+        this.openBattleInvConfig = this.createConfig(OpenBattleInvConfig.class, "gui" + File.separator + "open-battle.yml");
     }
 
     public void reload() {
@@ -60,6 +63,7 @@ public final class ConfigService {
         this.selectInvConfig.load();
         this.amountInvConfig.load();
         this.confirmInvConfig.load();
+        this.openBattleInvConfig.load();
     }
 
     private void getGuiFolder() {
@@ -119,5 +123,9 @@ public final class ConfigService {
 
     public ConfirmInvConfig getBattleConfirmInv() {
         return this.confirmInvConfig;
+    }
+
+    public OpenBattleInvConfig getOpenBattleInv() {
+        return this.openBattleInvConfig;
     }
 }

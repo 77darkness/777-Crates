@@ -42,7 +42,7 @@ public final class WinInv {
         placeReward(gui, reward, rewardSlot);
         placeGuiItems(gui, cfg, player, crate);
 
-        this.plugin.getRewardExecutor().giveReward(player, crate != null ? crate.getName() : "", reward);
+        this.plugin.getRewardExecutor().giveReward(player, crate, reward);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
 
         gui.open(player);
@@ -75,9 +75,16 @@ public final class WinInv {
         switch (action) {
             case "CLOSE" -> player.closeInventory();
             case "REOPEN" -> {
+                if (plugin.getRewardExecutor().countFreeSlots(player) < 1) {
+                    player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+                    lang.inventoryFull.send(player);
+                    return;
+                }
+
                 if (plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
                     player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                     lang.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));
+                    player.closeInventory();
                     return;
                 }
 

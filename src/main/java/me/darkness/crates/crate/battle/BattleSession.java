@@ -8,6 +8,7 @@ public final class BattleSession {
     private final UUID opponent;
     private String crateName;
     private int amount;
+    private boolean openMode = false;
 
     public BattleSession(UUID owner, UUID opponent) {
         this.owner = owner;
@@ -20,4 +21,6 @@ public final class BattleSession {
     public void setCrateName(String crateName) { this.crateName = crateName; }
     public int getAmount() { return amount; }
     public void setAmount(int amount) { this.amount = amount; }
+    public boolean isOpenMode() { return openMode; }
+    public void setOpenMode(boolean openMode) { this.openMode = openMode; }
 }

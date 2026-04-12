@@ -36,6 +36,10 @@ public final class RouletteAnimation extends CrateAnimation {
     public void start() {
         this.lane = RouletteUtil.buildLane(crate.getRewards(), reward, 80);
 
+        int centerLocalSlot = slots[slots.length / 2];
+        int simulatedFinalIndex = simulateFinalIndex(this.lane.size());
+        RouletteUtil.placeWinnerForCenter(this.lane, reward, centerLocalSlot, simulatedFinalIndex);
+
         RouletteInvConfig cfg = plugin.getConfigService().getRouletteInv();
         this.gui = Gui.gui()
                 .title(TextUtil.toComponent(cfg.title))
@@ -66,6 +70,26 @@ public final class RouletteAnimation extends CrateAnimation {
         }, 0L, 1L);
     }
 
+    private int simulateFinalIndex(int laneSize) {
+        int simTick = 0, simFrameTick = 0, simFrameDelay = 2, simIndex = 0;
+        while (simTick < 160) {
+            simTick++;
+            simFrameTick++;
+            if (simFrameTick >= simFrameDelay) {
+                simFrameTick = 0;
+                simIndex = (simIndex + 1) % laneSize;
+            }
+            simFrameDelay = simulateFrameDelay(simTick);
+        }
+        return simIndex;
+    }
+
+    private int simulateFrameDelay(int t) {
+        if (t <= 50) return 2;
+        if (t <= 110) return 2 + (int) Math.floor(4.0 * (t - 50) / (110 - 50));
+        return 6 + (int) Math.floor(14.0 * (t - 110) / (160 - 110));
+    }
+
     private int getFrameDelay() {
         if (tick <= 50) {
             return 2;
@@ -92,7 +116,6 @@ public final class RouletteAnimation extends CrateAnimation {
 
     private void stop() {
         task.cancel();
-        gui.updateItem(slots[slots.length / 2], new GuiItem(reward.getDisplayItem()));
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 0.9f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             player.closeInventory();

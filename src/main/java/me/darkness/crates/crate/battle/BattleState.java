@@ -4,7 +4,9 @@ import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.reward.CrateReward;
 import me.darkness.crates.crate.reward.RewardRoller;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,6 +19,7 @@ final class BattleState {
     private final Map<UUID, Challenge> challengesByChallenger = new HashMap<>();
     private final Map<UUID, Match> activeMatches = new HashMap<>();
     private final Map<UUID, UUID> matchByPlayer = new HashMap<>();
+    private final Map<UUID, OpenChallenge> openChallenges = new LinkedHashMap<>();
 
     BattleSession createSession(UUID owner, UUID opponent) {
         BattleSession session = new BattleSession(owner, opponent);
@@ -79,7 +82,7 @@ final class BattleState {
     }
 
     Match createMatch(UUID playerA, UUID playerB, String crateName, int amount, Crate crate, Supplier<UUID> winnerSupplier) {
-        Match match = new Match(playerA, playerB, crateName, amount);
+        Match match = new Match(playerA, playerB, crateName, amount, crate);
 
         activeMatches.put(playerA, match);
         matchByPlayer.put(playerA, playerA);
@@ -117,11 +120,30 @@ final class BattleState {
         return new HashMap<>(activeMatches);
     }
 
+    Collection<OpenChallenge> getOpenChallenges() {
+        return java.util.Collections.unmodifiableCollection(openChallenges.values());
+    }
+
+    boolean addOpenChallenge(OpenChallenge challenge) {
+        if (openChallenges.containsKey(challenge.getId())) return false;
+        openChallenges.put(challenge.getId(), challenge);
+        return true;
+    }
+
+    void removeOpenChallenge(UUID id) {
+        openChallenges.remove(id);
+    }
+
+    void removeOpenChallengeByCreator(UUID creatorId) {
+        openChallenges.values().removeIf(c -> c.getCreator().equals(creatorId));
+    }
+
     void clearAll() {
         sessions.clear();
         challengesByTarget.clear();
         challengesByChallenger.clear();
         activeMatches.clear();
         matchByPlayer.clear();
+        openChallenges.clear();
     }
 }

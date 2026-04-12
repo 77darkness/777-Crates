@@ -3,6 +3,7 @@ package me.darkness.crates.crate.reward;
 import dev.darkness.utilities.text.TextUtil;
 import me.darkness.crates.CratesPlugin;
 import me.darkness.crates.configuration.Lang;
+import me.darkness.crates.crate.Crate;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -21,7 +22,15 @@ public final class RewardExecutor {
         this.plugin = plugin;
     }
 
-    public void giveReward(Player player, String crateName, CrateReward reward) {
+    public int countFreeSlots(Player player) {
+        int free = 0;
+        for (ItemStack item : player.getInventory().getStorageContents()) {
+            if (item == null || item.getType().isAir()) free++;
+        }
+        return free;
+    }
+
+    public void giveReward(Player player, Crate crate, CrateReward reward) {
         if (reward == null || player == null) return;
 
         if (reward.shouldGiveItem() && reward.getRewardItem() != null) {
@@ -37,25 +46,32 @@ public final class RewardExecutor {
 
         String itemName = getItemName(reward);
         lang.rewardWon.send(player, Map.of("item", itemName));
-        broadcastReward(lang, player, crateName, reward, itemName);
+        broadcastReward(crate, player, reward, itemName);
     }
 
-    private void broadcastReward(Lang lang, Player player, String crateName, CrateReward reward, String itemName) {
-        if (!lang.rewardBroadcastEnabled || reward.getChance() > lang.rewardBroadcastMaxChance) return;
+    private void broadcastReward(Crate crate, Player player, CrateReward reward, String itemName) {
+        if (crate == null) return;
+        if (!crate.isRewardBroadcastEnabled() || reward.getChance() > crate.getRewardBroadcastMaxChance()) return;
+        Lang.MessageEntry broadcastEntry = crate.getRewardBroadcast();
+        if (broadcastEntry == null) return;
 
         Map<String, String> placeholders = Map.of(
                 "player", player.getName(),
                 "item", itemName,
-                "crate", crateName == null ? "" : crateName,
+                "crate", crate.getName(),
                 "chance", String.valueOf(reward.getChance())
         );
 
-        Bukkit.getOnlinePlayers().forEach(p -> lang.rewardBroadcast.send(p, placeholders));
+        Bukkit.getOnlinePlayers().forEach(p -> broadcastEntry.send(p, placeholders));
     }
 
     private void giveItem(Player player, ItemStack item) {
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(item);
-        leftover.values().forEach(i -> player.getWorld().dropItemNaturally(player.getLocation(), i));
+        if (!leftover.isEmpty()) {
+            Lang lang = this.plugin.getConfigService().getLangConfig();
+            lang.inventoryFull.send(player);
+            leftover.values().forEach(i -> player.getWorld().dropItemNaturally(player.getLocation(), i));
+        }
     }
 
     private void executeCommands(Player player, List<String> commands) {

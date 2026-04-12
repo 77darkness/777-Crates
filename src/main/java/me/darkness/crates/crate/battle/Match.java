@@ -1,5 +1,6 @@
 package me.darkness.crates.crate.battle;
 
+import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.reward.CrateReward;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ public final class Match {
     private final UUID playerB;
     private final String crateName;
     private final int amount;
+    private final Crate crate;
 
     private final List<CrateReward> rewardsA = new ArrayList<>();
     private final List<CrateReward> rewardsB = new ArrayList<>();
@@ -24,17 +26,19 @@ public final class Match {
     private final AtomicBoolean winnerHandled = new AtomicBoolean(false);
     private UUID winnerUuid;
 
-    public Match(UUID playerA, UUID playerB, String crateName, int amount) {
+    public Match(UUID playerA, UUID playerB, String crateName, int amount, Crate crate) {
         this.playerA = playerA;
         this.playerB = playerB;
         this.crateName = crateName;
         this.amount = amount;
+        this.crate = crate;
     }
 
     public UUID getPlayerA() { return playerA; }
     public UUID getPlayerB() { return playerB; }
     public String getCrateName() { return crateName; }
     public int getAmount() { return amount; }
+    public Crate getCrate() { return crate; }
 
     public void addRewardA(CrateReward reward) { rewardsA.add(reward); }
     public void addRewardB(CrateReward reward) { rewardsB.add(reward); }

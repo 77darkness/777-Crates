@@ -32,6 +32,13 @@ public final class WithoutAnimation extends CrateAnimation {
             return;
         }
 
+        if (plugin.getRewardExecutor().countFreeSlots(player) < 1) {
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            lang.inventoryFull.send(player);
+            player.closeInventory();
+            return;
+        }
+
         if (plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             lang.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));

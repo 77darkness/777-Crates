@@ -18,8 +18,6 @@ public class Lang extends OkaeriConfig {
     public MessageEntry reloadSuccess = MessageEntry.chat("&#00FF00☺ &fPrzeładowano konfiguracje!");
     public MessageEntry commandUsage = MessageEntry.chat("&#FF0000☹ &cPoprawne użycie: &#FF0000{usage}");
     public MessageEntry notLookingAtBlock = MessageEntry.chat("&#FF0000☹ &cMusisz patrzeć na blok.");
-
-    @Comment("")
     public MessageEntry crateNotFound = MessageEntry.chat("&#FF0000☹ &cSkrzynka &#FF0000{crate} &cnie istnieje.");
     public MessageEntry crateAlreadyExists = MessageEntry.chat("&#FF0000☹ &cSkrzynka &#FF0000{crate} &cjuż istnieje.");
     public MessageEntry crateCreated = MessageEntry.chat("&#00FF00☺ &fUtworzono skrzynkę &#00FF00{crate}&f.");
@@ -29,29 +27,20 @@ public class Lang extends OkaeriConfig {
     public MessageEntry notCrate = MessageEntry.chat("&#FF0000☹ &cTen blok to nie skrzynka &#FF0000{crate}&c.");
     public MessageEntry crateNoRewards = MessageEntry.chat("&#FF0000☹ &cTa skrzynka nie ma ustawionych nagród!");
     public MessageEntry noKey = MessageEntry.subtitle("&8» &#FF0000Nie posiadasz klucza do tej skrzynki!");
+    public MessageEntry inventoryFull = MessageEntry.subtitle("&8» &#FF0000Opróżnij ekwipunek!");
     public MessageEntry rewardWon = MessageEntry.chat("&#00FF00☺ &fTwoja wygrana: &#00FF00{item}&f!");
-
-    @Comment("")
     public MessageEntry keyGiven = MessageEntry.chat("&#00FF00☺ &fNadano &#00FF00{amount}x &fkluczy do skrzynki &#00FF00{crate} &fgraczowi &#00FF00{player}&f.");
     public MessageEntry keyReceived = MessageEntry.chat("&#00FF00☺ &fOtrzymałeś &#00FF00{amount}x &fkluczy do skrzynki &#00FF00{crate}&f.");
     public MessageEntry keyGivenAll = MessageEntry.chat("&#00FF00☺ &fWszyscy gracze otrzymali &#00FF00{amount}x &fkluczy do skrzynki &#00FF00{crate}&f.");
-
-    @Comment("")
     public MessageEntry chanceEditPrompt = MessageEntry.chat("&fWpisz szansę dropu pomiędzy &#00FF001-100&f. Aby anulować, wpisz &#FF0000anuluj&f.");
     public MessageEntry chanceEditCancelled = MessageEntry.chat("&#FF0000☹ &cAnulowano zmianę szansy.");
     public MessageEntry chanceEditInvalidNumber = MessageEntry.chat("&#FF0000☹ &cPodaj poprawną liczbę (np. &e25.5 &club &e15&c).");
     public MessageEntry chanceEditOutOfRange = MessageEntry.chat("&#FF0000☹ &cSzansa musi być w zakresie &#FF00001-100&c.");
     public MessageEntry chanceEditSuccess = MessageEntry.chat("&#00FF00☺ &fUstawiono szansę na &#00FF00{chance}%&f.");
-
-    @Comment("")
     public MessageEntry commandEditPrompt = MessageEntry.chat("&fWpisz komendę która ma być wykonywana jako nagroda. Użyj &#00FF00{player} &fjako nick gracza.\n&fAby usunąć komendy wpisz &#FFFF00brak&f. Aby anulować wpisz &#FF0000anuluj&f.");
     public MessageEntry commandEditCancelled = MessageEntry.chat("&#FF0000☹ &cAnulowano zmianę komend.");
     public MessageEntry commandEditSuccess = MessageEntry.chat("&#00FF00☺ &fZapisano komendę.");
-
-    @Comment("")
     public MessageEntry giveItemToggled = MessageEntry.chat("&#00FF00☺ &fUstawiono typ nagrody na: &#00FF00{mode}&f.");
-
-    @Comment("")
     public MessageEntry battleCantChallengeSelf = MessageEntry.chat("&#FF0000☹ &cNie możesz wyzwać samego siebie.");
     public MessageEntry battleChallengeSent = MessageEntry.chat("&#00FF00☺ &fWysłano wyzwanie do &#00FF00{player}&f.");
     public MessageEntry battleChallengeReceived = MessageEntry.chat("&#00FF00☺ &fMasz wyzwanie od &#00FF00{player}&f!\n&fUżyj &#00FF00/bitwa akceptuj {player} &flub &#00FF00&nkliknij&#00FF00 na tą wiadomość&f.");
@@ -59,16 +48,11 @@ public class Lang extends OkaeriConfig {
     public MessageEntry battleNoChallengeFromPlayer = MessageEntry.chat("&#FF0000☹ &cNie masz wyzwania od &#FF0000{player}&c.");
     public MessageEntry battleAccepted = MessageEntry.chat("&#00FF00☺ &fZaakceptowano bitwę z &#00FF00{player}&f!");
     public MessageEntry battleChallengeExpired = MessageEntry.chat("&#FF0000☹ &cTo wyzwanie wygasło.");
-
-    @Comment("")
-    public boolean rewardBroadcastEnabled = true;
-    @Comment("Od jakiej szansy (w %) ma być wysyłany broadcast (100 = zawsze)")
-    public double rewardBroadcastMaxChance = 100.0;
-    public MessageEntry rewardBroadcast = MessageEntry.chat(
-            "&8» &fGracz &#00FF00{player} &fwylosował &#FFFF00{item} &fze skrzynki &#00FF00{crate}&f!"
-    );
-
-    @Comment("")
+    public MessageEntry battleCountdown = MessageEntry.titleSubtitle("&fBitwa z &#00FF00{player}", "&8» &fza &#00FF00{seconds}&f sek. &8(Wpisz &#FF0000anuluj &8aby anulować)");
+    public MessageEntry battleCountdownCancelledBySelf = MessageEntry.subtitle("&8» &#FF0000Anulowałeś bitwę z {player}.");
+    public MessageEntry battleCountdownCancelledByOpponent = MessageEntry.subtitle("&8» &#FF0000{player} anulował bitwę.");
+    public MessageEntry openBattleCreated = MessageEntry.chat("&#00FF00☺ &fUtworzono bitwę na &#00FF00{amount}x &fskrzynek &#00FF00{crate}&f");
+    public MessageEntry openBattleNoLongerAvailable = MessageEntry.chat("&#FF0000☹ &cTa bitwa nie jest już dostępna.");
     public List<String> adminHelp = List.of(
         "&#FB0000☹ &cPoprawne użycie komend:",
         "&8- &#FB0000/777crate create <nazwa>",

@@ -17,6 +17,12 @@ public class CrateConfig extends OkaeriConfig {
     public Integer keyCustomModelData = null;
     public Hologram hologram = new Hologram();
 
+    public boolean rewardBroadcastEnabled = true;
+    public double rewardBroadcastMaxChance = 100.0;
+    public Lang.MessageEntry rewardBroadcast = Lang.MessageEntry.chat(
+            "&8» &fGracz &#00FF00{player} &fwylosował &#FFFF00{item} &fze skrzynki &#00FF00{crate}&f!"
+    );
+
     public List<Location> locations = new ArrayList<>();
     public List<RewardEntry> rewards = new ArrayList<>();
 

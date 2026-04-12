@@ -100,7 +100,8 @@ public final class CrateLoader {
         List<Location> locations = config.locations != null ? new ArrayList<>(config.locations) : new ArrayList<>();
 
         return new Crate(config.name, config.displayName, animation, keyItem, config.keyCustomModelData,
-                locations, rewards, holoLines, holoHeight, holoEnabled);
+                locations, rewards, holoLines, holoHeight, holoEnabled,
+                config.rewardBroadcastEnabled, config.rewardBroadcastMaxChance, config.rewardBroadcast);
     }
 
     private List<CrateReward> buildRewards(CrateConfig config) {
@@ -174,7 +175,6 @@ public final class CrateLoader {
         for (CrateReward reward : crate.getRewards()) {
             CrateConfig.RewardEntry entry = new CrateConfig.RewardEntry();
             entry.slot = reward instanceof SlottedCrateReward s ? s.getSlot() : slotCounter++;
-
             ItemStack itemToSave = reward.getRewardItem() != null ? reward.getRewardItem() : reward.getDisplayItem();
             entry.rewardItem = itemToSave != null ? ItemStackSerializer.toBase64(itemToSave) : null;
             entry.commands = new ArrayList<>(reward.getCommands());
@@ -187,6 +187,10 @@ public final class CrateLoader {
         config.hologram.enabled = crate.isHologramEnabled();
         config.hologram.height = crate.getHologramHeight();
         config.hologram.lines = new ArrayList<>(crate.getHologramLines());
+
+        config.rewardBroadcastEnabled = crate.isRewardBroadcastEnabled();
+        config.rewardBroadcastMaxChance = crate.getRewardBroadcastMaxChance();
+        config.rewardBroadcast = crate.getRewardBroadcast();
     }
 
     private CrateConfig loadCrateConfig(File file) {

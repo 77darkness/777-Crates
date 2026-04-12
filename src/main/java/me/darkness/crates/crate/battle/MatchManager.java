@@ -149,6 +149,21 @@ final class MatchManager {
         int keysB = keyService.countKeys(b, crate.getName());
         if (keysB < amount) { noKeys(b, keysB, amount); return false; }
 
+        Lang lang = plugin.getConfigService().getLangConfig();
+        int freeA = plugin.getRewardExecutor().countFreeSlots(a);
+        if (freeA < amount) {
+            a.playSound(a.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            lang.inventoryFull.send(a);
+            return false;
+        }
+
+        int freeB = plugin.getRewardExecutor().countFreeSlots(b);
+        if (freeB < amount) {
+            b.playSound(b.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+            lang.inventoryFull.send(b);
+            return false;
+        }
+
         return keyService.takeKeys(a, crate.getName(), amount)
                 && keyService.takeKeys(b, crate.getName(), amount);
     }
@@ -172,9 +187,9 @@ final class MatchManager {
     private void giveRewards(UUID winnerUuid, Match match) {
         Player winner = Bukkit.getPlayer(winnerUuid);
         if (winner == null) return;
-        String crateName = match.getCrateName();
-        match.getRewardsA().forEach(r -> plugin.getRewardExecutor().giveReward(winner, crateName, r));
-        match.getRewardsB().forEach(r -> plugin.getRewardExecutor().giveReward(winner, crateName, r));
+        Crate crate = match.getCrate();
+        match.getRewardsA().forEach(r -> plugin.getRewardExecutor().giveReward(winner, crate, r));
+        match.getRewardsB().forEach(r -> plugin.getRewardExecutor().giveReward(winner, crate, r));
     }
 
     private UUID resolveWinner(Match match) {

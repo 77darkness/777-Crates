@@ -9,7 +9,6 @@ import me.darkness.crates.crate.reward.CrateReward;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 public final class RouletteUtil {
 
@@ -18,9 +17,14 @@ public final class RouletteUtil {
     public static List<CrateReward> buildLane(List<CrateReward> pool, CrateReward winner, int minSize) {
         List<CrateReward> lane = new ArrayList<>(pool);
         Collections.shuffle(lane);
-        lane.add(ThreadLocalRandom.current().nextInt(Math.max(1, lane.size())), winner);
         while (lane.size() < minSize) lane.addAll(pool);
         return lane;
+    }
+
+    public static int placeWinnerForCenter(List<CrateReward> lane, CrateReward winner, int centerSlot, int finalIndex) {
+        int targetPos = Math.floorMod(finalIndex + centerSlot, lane.size());
+        lane.set(targetPos, winner);
+        return targetPos;
     }
 
     public static int[] resolveLocalSlots(List<Integer> cfgSlots, List<Integer> fallback) {

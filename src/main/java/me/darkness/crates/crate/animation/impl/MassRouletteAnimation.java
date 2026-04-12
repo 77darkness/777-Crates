@@ -41,9 +41,16 @@ public final class MassRouletteAnimation extends CrateAnimation {
 
     @Override
     public void start() {
-        this.lanes = winners.stream()
-                .map(w -> RouletteUtil.buildLane(crate.getRewards(), w, 60))
-                .toList();
+        int centerLocalSlot = localSlots[localSlots.length / 2];
+        int simulatedFinalOffset = simulateFinalOffset();
+
+        List<List<CrateReward>> mutableLanes = new java.util.ArrayList<>();
+        for (int i = 0; i < winners.size(); i++) {
+            List<CrateReward> lane = RouletteUtil.buildLane(crate.getRewards(), winners.get(i), 60);
+            RouletteUtil.placeWinnerForCenter(lane, winners.get(i), centerLocalSlot, simulatedFinalOffset);
+            mutableLanes.add(lane);
+        }
+        this.lanes = java.util.Collections.unmodifiableList(mutableLanes);
 
         this.laneOffsets = new int[lanes.size()];
         for (int i = 0; i < laneOffsets.length; i++) {
@@ -83,18 +90,26 @@ public final class MassRouletteAnimation extends CrateAnimation {
         }, 0L, 1L);
     }
 
+    private int simulateFinalOffset() {
+        int simTick = 0, simDelay = 2, simOffset = 0;
+        while (simTick < 105) {
+            simTick++;
+            if (simTick % simDelay == 0) {
+                simOffset++;
+                if (simTick > 70 && simTick % 5 == 0) simDelay++;
+            }
+        }
+        return simOffset;
+    }
+
     private void updateDisplay() {
         int[] rowOffsets = RouletteUtil.rowMappingForCount(massCount);
-        boolean isFinal = tick >= 100;
-        int centerSlot = localSlots[localSlots.length / 2];
 
         for (int i = 0; i < lanes.size(); i++) {
             int rowBase = rowOffsets[i] * 9;
             List<CrateReward> lane = lanes.get(i);
             for (int slot : localSlots) {
-                ItemStack item = (isFinal && slot == centerSlot)
-                        ? winners.get(i).getDisplayItem()
-                        : lane.get((laneOffsets[i] + slot) % lane.size()).getDisplayItem();
+                ItemStack item = lane.get((laneOffsets[i] + slot) % lane.size()).getDisplayItem();
                 gui.updateItem(slot + rowBase, new GuiItem(item));
             }
         }
@@ -105,9 +120,17 @@ public final class MassRouletteAnimation extends CrateAnimation {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             player.closeInventory();
-            winners.forEach(r -> plugin.getRewardExecutor().giveReward(player, crate.getName(), r));
+            winners.forEach(r -> plugin.getRewardExecutor().giveReward(player, crate, r));
             finish();
         }, 40L);
+    }
+
+    @Override
+    protected void onFinish() {}
+
+    @Override
+    protected void onCancel() {
+        winners.forEach(r -> plugin.getRewardExecutor().giveReward(player, crate, r));
     }
 
     @Override public boolean isAnimation(Inventory inv) { return gui != null && gui.getInventory().equals(inv); }

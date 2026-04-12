@@ -85,6 +85,13 @@ public final class MassOpenInv {
             return;
         }
 
+        if (this.plugin.getRewardExecutor().countFreeSlots(player) < amount) {
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            lang.inventoryFull.send(player);
+            player.closeInventory();
+            return;
+        }
+
         KeyService keyService = this.plugin.getKeyService();
         if (keyService.countKeys(player, crate.getName()) < amount || !keyService.takeKeys(player, crate.getName(), amount)) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
@@ -99,7 +106,7 @@ public final class MassOpenInv {
         }
 
         if (winners.size() < 2) {
-            winners.forEach(r -> this.plugin.getRewardExecutor().giveReward(player, crate.getName(), r));
+            winners.forEach(r -> this.plugin.getRewardExecutor().giveReward(player, crate, r));
             return;
         }
 

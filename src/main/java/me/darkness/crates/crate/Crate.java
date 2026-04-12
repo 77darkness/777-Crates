@@ -2,6 +2,7 @@ package me.darkness.crates.crate;
 
 import me.darkness.crates.crate.animation.AnimationType;
 import me.darkness.crates.crate.reward.CrateReward;
+import me.darkness.crates.configuration.Lang;
 import me.darkness.crates.util.LocationUtil;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
@@ -22,6 +23,9 @@ public final class Crate {
     private final List<String> hologramLines;
     private final double hologramHeight;
     private final boolean hologramEnabled;
+    private final boolean rewardBroadcastEnabled;
+    private final double rewardBroadcastMaxChance;
+    private final Lang.MessageEntry rewardBroadcast;
 
     public Crate(
             String name,
@@ -33,7 +37,10 @@ public final class Crate {
             List<CrateReward> rewards,
             List<String> hologramLines,
             double hologramHeight,
-            boolean hologramEnabled
+            boolean hologramEnabled,
+            boolean rewardBroadcastEnabled,
+            double rewardBroadcastMaxChance,
+            Lang.MessageEntry rewardBroadcast
     ) {
         this.name = name;
         this.displayName = displayName;
@@ -45,6 +52,9 @@ public final class Crate {
         this.hologramLines = hologramLines == null ? new ArrayList<>() : new ArrayList<>(hologramLines);
         this.hologramHeight = hologramHeight;
         this.hologramEnabled = hologramEnabled;
+        this.rewardBroadcastEnabled = rewardBroadcastEnabled;
+        this.rewardBroadcastMaxChance = rewardBroadcastMaxChance;
+        this.rewardBroadcast = rewardBroadcast;
     }
 
     public String getName() { return this.name; }
@@ -58,9 +68,12 @@ public final class Crate {
     public List<String> getHologramLines() { return new ArrayList<>(this.hologramLines); }
     public double getHologramHeight() { return this.hologramHeight; }
     public boolean isHologramEnabled() { return this.hologramEnabled; }
+    public boolean isRewardBroadcastEnabled() { return this.rewardBroadcastEnabled; }
+    public double getRewardBroadcastMaxChance() { return this.rewardBroadcastMaxChance; }
+    public Lang.MessageEntry getRewardBroadcast() { return this.rewardBroadcast; }
 
     public Crate withLocations(List<Location> newLocations) {
-        return new Crate(name, displayName, animationType, key, keyCustomModelData, newLocations, rewards, hologramLines, hologramHeight, hologramEnabled);
+        return new Crate(name, displayName, animationType, key, keyCustomModelData, newLocations, rewards, hologramLines, hologramHeight, hologramEnabled, rewardBroadcastEnabled, rewardBroadcastMaxChance, rewardBroadcast);
     }
 
     public Crate withAddedLocation(Location location) {
@@ -80,7 +93,7 @@ public final class Crate {
     }
 
     public Crate withRewards(List<CrateReward> newRewards) {
-        return new Crate(name, displayName, animationType, key, keyCustomModelData, locations, newRewards, hologramLines, hologramHeight, hologramEnabled);
+        return new Crate(name, displayName, animationType, key, keyCustomModelData, locations, newRewards, hologramLines, hologramHeight, hologramEnabled, rewardBroadcastEnabled, rewardBroadcastMaxChance, rewardBroadcast);
     }
 
     @Override

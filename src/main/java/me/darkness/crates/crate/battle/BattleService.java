@@ -77,6 +77,18 @@ public final class BattleService {
         }
     }
 
+    public void startCountdown(Challenge challenge) {
+        if (challenge == null) return;
+
+        int seconds = plugin.getConfigService().getCrateConfig().battleCountdownSeconds;
+        if (seconds <= 0) {
+            startMatch(challenge);
+            return;
+        }
+
+        new BattleCountdown(plugin, challenge, seconds, () -> startMatch(challenge)).start();
+    }
+
     public void rouletteFinished(UUID who) {
         coordinator.rouletteFinished(who, match -> coordinator.finishMassOpen(match, this::findCrate));
     }
@@ -93,7 +105,27 @@ public final class BattleService {
         if (playerId == null) return;
         state.removeSession(playerId);
         state.removeChallengeForPlayer(playerId);
+        state.removeOpenChallengeByCreator(playerId);
         coordinator.cancelForPlayer(playerId);
+    }
+
+    public Collection<OpenChallenge> getOpenChallenges() {
+        return state.getOpenChallenges();
+    }
+
+    public boolean addOpenChallenge(OpenChallenge challenge) {
+        return state.addOpenChallenge(challenge);
+    }
+
+    public void removeOpenChallenge(UUID id) {
+        state.removeOpenChallenge(id);
+    }
+
+    public void startMatchFromOpen(OpenChallenge open, Player joiner) {
+        Challenge challenge = new Challenge(open.getCreator(), joiner.getUniqueId(),
+                open.getCrateName(), open.getAmount(), System.currentTimeMillis());
+        state.removeOpenChallenge(open.getId());
+        startCountdown(challenge);
     }
 
     public void shutdown() {

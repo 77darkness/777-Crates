@@ -9,5 +9,9 @@ public class Config extends OkaeriConfig {
 
     @Comment("")
     @Comment("Po ilu sekundach wyzwanie do casebattle ma wygasać")
-    public int challengeExpire = 30;
+    public int challengeExpire = 120;
+
+    @Comment("")
+    @Comment("Ile sekund trwa odliczanie przed rozpoczęciem bitwy (0 = brak odliczania)")
+    public int battleCountdownSeconds = 10;
 }

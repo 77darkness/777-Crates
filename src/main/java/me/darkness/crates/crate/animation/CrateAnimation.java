@@ -69,7 +69,7 @@ public abstract class CrateAnimation {
 
     private void giveReward() {
         if (this.reward != null) {
-            this.plugin.getRewardExecutor().giveReward(this.player, this.crate != null ? this.crate.getName() : "", this.reward);
+            this.plugin.getRewardExecutor().giveReward(this.player, this.crate, this.reward);
         }
     }
 }
