@@ -29,7 +29,7 @@ public final class KeyService {
     }
 
     public boolean tryConsumeKey(Player player, String crateName) {
-        if (player == null) return true;
+        if (player == null) return false;
 
         ItemStack[] contents = player.getInventory().getContents();
         for (int slot = 0; slot < contents.length; slot++) {
@@ -41,9 +41,9 @@ public final class KeyService {
                 contents[slot].setAmount(contents[slot].getAmount() - 1);
             }
             player.getInventory().setContents(contents);
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     public int countKeys(Player player, String crateName) {

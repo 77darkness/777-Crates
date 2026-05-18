@@ -28,10 +28,15 @@ import java.util.Objects;
 public final class PreviewInv {
 
     private final CratesPlugin plugin;
+    private final MassOpenInv massOpenInv;
+    private final EditInv editInv;
 
-    public PreviewInv(CratesPlugin plugin) {
+    public PreviewInv(CratesPlugin plugin, MassOpenInv massOpenInv) {
         this.plugin = plugin;
+        this.massOpenInv = massOpenInv;
+        this.editInv = new EditInv(plugin, plugin.getCrateService(), plugin.getCrateLoader());
     }
+
 
     public void open(Player player, Crate crate) {
         PreviewInvConfig cfg = this.plugin.getConfigService().getPreviewInv();
@@ -48,12 +53,13 @@ public final class PreviewInv {
         if (cfg.items != null) {
             cfg.items.values().forEach(item -> {
                 if (item == null || item.slot < 0 || item.slot >= size) return;
-                String action = item.action == null ? "NONE" : item.action.toUpperCase(Locale.ROOT);
-                gui.setItem(item.slot, new GuiItem(createItem(item, crate), e -> {
-                    e.setCancelled(true);
-                    handleAction(player, crate, action);
-                }));
+                gui.setItem(item.slot, new GuiItem(createItem(item, crate)));
                 used[item.slot] = true;
+                if (item.action != null && !item.action.isBlank()) {
+                    String action = item.action.toUpperCase(Locale.ROOT);
+                    gui.addSlotAction(item.slot, event ->
+                            handleAction((Player) event.getWhoClicked(), crate, action));
+                }
             });
         }
 
@@ -65,23 +71,26 @@ public final class PreviewInv {
         gui.open(player);
     }
 
+
     private void placeSlottedRewards(Gui gui, Crate crate, PreviewInvConfig cfg, int size, boolean[] used) {
-        for (CrateReward reward : crate.getRewards()) {
+        List<CrateReward> rewards = crate.getRewards();
+        for (CrateReward reward : rewards) {
             if (!(reward instanceof SlottedCrateReward slotted) || reward.getDisplayItem() == null) continue;
             int slot = slotted.getSlot();
             if (slot < 0 || slot >= size || used[slot]) continue;
-            gui.setItem(slot, new GuiItem(formatRewardItem(reward, crate, cfg), e -> e.setCancelled(true)));
+            gui.setItem(slot, new GuiItem(formatRewardItem(reward, crate, cfg)));
             used[slot] = true;
         }
     }
 
     private void placeUnslottedRewards(Gui gui, Crate crate, PreviewInvConfig cfg, int size, boolean[] used) {
+        List<CrateReward> rewards = crate.getRewards();
         int index = 0;
-        for (CrateReward reward : crate.getRewards()) {
+        for (CrateReward reward : rewards) {
             if (reward == null || reward.getDisplayItem() == null || reward instanceof SlottedCrateReward) continue;
             while (index < size && used[index]) index++;
             if (index >= size) break;
-            gui.setItem(index, new GuiItem(formatRewardItem(reward, crate, cfg), e -> e.setCancelled(true)));
+            gui.setItem(index, new GuiItem(formatRewardItem(reward, crate, cfg)));
             used[index++] = true;
         }
     }
@@ -90,9 +99,10 @@ public final class PreviewInv {
         switch (action) {
             case "OPEN_ANIMATED" -> openAnimated(player, crate);
             case "OPEN_WITHOUT_ANIMATION" -> WithoutAnimation.openWithoutAnimation(this.plugin, player, crate);
-            case "MASS_OPEN" -> new MassOpenInv(this.plugin).open(player, crate);
-            case "EDIT" -> new EditInv(this.plugin, this.plugin.getCrateService(), this.plugin.getCrateLoader()).open(player, crate);
+            case "MASS_OPEN" -> this.massOpenInv.open(player, crate);
+            case "EDIT" -> this.editInv.open(player, crate);
             case "BACK" -> player.closeInventory();
+            case "NONE" -> {}
         }
     }
 
@@ -106,20 +116,21 @@ public final class PreviewInv {
         }
 
         if (this.plugin.getAnimationService().hasActiveAnimation(player)) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
 
         if (this.plugin.getRewardExecutor().countFreeSlots(player) < 1) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             lang.inventoryFull.send(player);
             player.closeInventory();
             return;
         }
 
-        if (plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
-            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+        if (!plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
+            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             lang.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));
+            player.closeInventory();
             return;
         }
 

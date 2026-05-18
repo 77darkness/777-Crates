@@ -7,6 +7,7 @@ import me.darkness.crates.crate.animation.impl.WithoutAnimation;
 import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -15,10 +16,17 @@ public final class AnimationService {
 
     private final CratesPlugin plugin;
     private final Map<UUID, CrateAnimation> activeAnimations;
+    private org.bukkit.scheduler.BukkitTask globalTask;
 
     public AnimationService(CratesPlugin plugin) {
         this.plugin = plugin;
         this.activeAnimations = new HashMap<>();
+        this.globalTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (activeAnimations.isEmpty()) return;
+            for (CrateAnimation animation : new ArrayList<>(activeAnimations.values())) {
+                animation.tick();
+            }
+        }, 1L, 1L);
     }
 
     public void startAnimation(Player player, Crate crate, CrateReward reward) {
@@ -54,6 +62,10 @@ public final class AnimationService {
     public void cancelAll() {
         this.activeAnimations.values().forEach(CrateAnimation::cancel);
         this.activeAnimations.clear();
+        if (this.globalTask != null) {
+            this.globalTask.cancel();
+            this.globalTask = null;
+        }
     }
 
     private CrateAnimation createAnimation(AnimationType type, Player player, Crate crate, CrateReward reward) {

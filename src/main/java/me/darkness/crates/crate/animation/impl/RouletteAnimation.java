@@ -19,11 +19,11 @@ public final class RouletteAnimation extends CrateAnimation {
 
     private final int[] slots;
     private List<CrateReward> lane;
+    private GuiItem[] laneItems;
     private Gui gui;
-    private int tick = 0;
-    private int frameDelay = 2;
-    private int frameTick = 0;
-    private int index = 0;
+
+    private int localTick = 0, frameDelay = 2, frameTick = 0, index = 0;
+    private boolean stopping = false;
 
     public RouletteAnimation(CratesPlugin plugin, Player player, Crate crate, CrateReward reward) {
         super(plugin, player, crate, reward);
@@ -37,8 +37,12 @@ public final class RouletteAnimation extends CrateAnimation {
         this.lane = RouletteUtil.buildLane(crate.getRewards(), reward, 80);
 
         int centerLocalSlot = slots[slots.length / 2];
-        int simulatedFinalIndex = simulateFinalIndex(this.lane.size());
-        RouletteUtil.placeWinnerForCenter(this.lane, reward, centerLocalSlot, simulatedFinalIndex);
+        RouletteUtil.placeWinnerForCenter(this.lane, reward, centerLocalSlot, 48);
+
+        this.laneItems = new GuiItem[lane.size()];
+        for (int i = 0; i < lane.size(); i++) {
+            laneItems[i] = new GuiItem(lane.get(i).getDisplayItem());
+        }
 
         RouletteInvConfig cfg = plugin.getConfigService().getRouletteInv();
         this.gui = Gui.gui()
@@ -53,73 +57,39 @@ public final class RouletteAnimation extends CrateAnimation {
             gui.setItem(s, new GuiItem(lane.get(s % lane.size()).getDisplayItem()));
         }
         this.gui.open(player);
+    }
 
-        this.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            tick++;
-            frameTick++;
+    @Override
+    public void tick() {
+        if (stopping) return;
 
-            if (frameTick >= frameDelay) {
-                frameTick = 0;
-                index = (index + 1) % lane.size();
-                scroll();
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.45f, getPitch());
+        localTick++;
+        frameTick++;
+
+        if (frameTick >= frameDelay) {
+            frameTick = 0;
+            index = (index + 1) % lane.size();
+            for (int s : slots) {
+                gui.updateItem(s, laneItems[(index + s) % lane.size()]);
             }
-
-            frameDelay = getFrameDelay();
-            if (tick >= 160) stop();
-        }, 0L, 1L);
-    }
-
-    private int simulateFinalIndex(int laneSize) {
-        int simTick = 0, simFrameTick = 0, simFrameDelay = 2, simIndex = 0;
-        while (simTick < 160) {
-            simTick++;
-            simFrameTick++;
-            if (simFrameTick >= simFrameDelay) {
-                simFrameTick = 0;
-                simIndex = (simIndex + 1) % laneSize;
-            }
-            simFrameDelay = simulateFrameDelay(simTick);
+            float t = (float)(localTick - 50) / 110;
+            float pitch = localTick <= 50 ? 1.5f : Math.max(0.5f, 1.5f - t);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.45f, pitch);
         }
-        return simIndex;
-    }
 
-    private int simulateFrameDelay(int t) {
-        if (t <= 50) return 2;
-        if (t <= 110) return 2 + (int) Math.floor(4.0 * (t - 50) / (110 - 50));
-        return 6 + (int) Math.floor(14.0 * (t - 110) / (160 - 110));
-    }
+        if (localTick <= 50) frameDelay = 2;
+        else if (localTick <= 110) frameDelay = 2 + (int) Math.floor(4.0 * (localTick - 50) / 60);
+        else frameDelay = 6 + (int) Math.floor(14.0 * (localTick - 110) / 50);
 
-    private int getFrameDelay() {
-        if (tick <= 50) {
-            return 2;
-        } else if (tick <= 110) {
-            int progress = tick - 50;
-            return 2 + (int) Math.floor(4.0 * progress / (110 - 50));
-        } else {
-            int progress = tick - 110;
-            return 6 + (int) Math.floor(14.0 * progress / (160 - 110));
-        }
-    }
-
-    private float getPitch() {
-        if (tick <= 50) return 1.5f;
-        float t = (float)(tick - 50) / (160 - 50);
-        return Math.max(0.5f, 1.5f - t);
-    }
-
-    private void scroll() {
-        for (int s : slots) {
-            gui.updateItem(s, new GuiItem(lane.get((index + s) % lane.size()).getDisplayItem()));
-        }
+        if (localTick >= 160) stop();
     }
 
     private void stop() {
-        task.cancel();
+        stopping = true;
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 0.9f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            player.closeInventory();
             finish();
+            player.closeInventory();
         }, 50);
     }
 

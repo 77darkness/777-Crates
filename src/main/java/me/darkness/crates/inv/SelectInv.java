@@ -9,7 +9,6 @@ import me.darkness.crates.configuration.Inv.SelectInvConfig;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.battle.BattleService;
 import me.darkness.crates.crate.battle.BattleSession;
-import me.darkness.crates.inv.OpenBattleInv;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -66,19 +65,21 @@ public final class SelectInv {
                         .lore(loreList)
                         .build();
 
-                gui.setItem(item.slot, new GuiItem(stack, e -> {
-                    e.setCancelled(true);
-                    if ("CLOSE".equals(action)) challenger.closeInventory();
-                    else if ("BACK".equals(action)) {
-                        if (isOpen) {
-                            challenger.closeInventory();
-                            plugin.getServer().getScheduler().runTask(plugin, () ->
-                                    new OpenBattleInv(plugin, service).open(challenger));
-                        } else {
-                            challenger.closeInventory();
+                gui.setItem(item.slot, new GuiItem(stack));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> {
+                        if ("CLOSE".equals(action)) challenger.closeInventory();
+                        else if ("BACK".equals(action)) {
+                            if (isOpen) {
+                                challenger.closeInventory();
+                                plugin.getServer().getScheduler().runTask(plugin, () ->
+                                        new OpenBattleInv(plugin, service).open(challenger));
+                            } else {
+                                challenger.closeInventory();
+                            }
                         }
-                    }
-                }));
+                    });
+                }
             }
         }
 
@@ -110,15 +111,15 @@ public final class SelectInv {
                     .lore(crateConfig.lore)
                     .build();
 
-            gui.setItem(crateConfig.slot, new GuiItem(icon, event -> {
-                event.setCancelled(true);
+            gui.setItem(crateConfig.slot, new GuiItem(icon));
+            gui.addSlotAction(crateConfig.slot, event -> {
                 session.setCrateName(crate.getName());
                 if (isOpen) {
                     new AmountInv(plugin, service).openForOpen(challenger);
                 } else {
                     new AmountInv(plugin, service).open(challenger);
                 }
-            }));
+            });
         }
     }
 }

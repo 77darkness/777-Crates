@@ -46,10 +46,10 @@ public final class MassOpenInv {
             cfg.items.values().forEach(item -> {
                 if (item == null || item.slot < 0 || item.slot >= size) return;
                 String action = item.action == null ? "NONE" : item.action.toUpperCase(Locale.ROOT);
-                gui.setItem(item.slot, new GuiItem(toItemStack(item, crate), e -> {
-                    e.setCancelled(true);
-                    handleAction(player, crate, action);
-                }));
+                gui.setItem(item.slot, new GuiItem(toItemStack(item, crate)));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> handleAction(player, crate, action));
+                }
             });
         }
 
@@ -58,7 +58,7 @@ public final class MassOpenInv {
 
     private void handleAction(Player player, Crate crate, String action) {
         if ("BACK".equals(action)) {
-            new PreviewInv(this.plugin).open(player, crate);
+            this.plugin.getPreviewInv().open(player, crate);
             return;
         }
 

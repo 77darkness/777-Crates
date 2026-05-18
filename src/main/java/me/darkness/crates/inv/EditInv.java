@@ -32,8 +32,6 @@ import java.util.*;
 
 public final class EditInv {
 
-    private static final DecimalFormat CHANCE_FORMAT = new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US));
-
     private final CratesPlugin plugin;
     private final CrateService crateService;
     private final CrateLoader crateLoader;
@@ -60,8 +58,16 @@ public final class EditInv {
         handleSession(playerId, crate, rows);
         applyItems(gui, playerId, crate, config, rows, blockedSlots);
 
-        gui.setDefaultClickAction(event -> handleClick(event, player, playerId, crate, config, rows, blockedSlots, gui));
-        gui.setCloseGuiAction(event -> onClose(player, playerId, crate, event.getInventory(), rows, blockedSlots));
+        gui.setDefaultClickAction(event -> {
+            if (!(event.getWhoClicked() instanceof Player p)) return;
+            handleClick(event, p, p.getUniqueId(), crate, config, rows, blockedSlots, gui);
+        });
+
+        gui.setCloseGuiAction(event -> {
+            if (!(event.getPlayer() instanceof Player p)) return;
+            onClose(p, p.getUniqueId(), crate, event.getInventory(), rows, blockedSlots);
+        });
+
         gui.open(player);
     }
 
@@ -225,7 +231,7 @@ public final class EditInv {
             return item;
         }
 
-        String chanceStr = CHANCE_FORMAT.format(reward.getChance());
+        String chanceStr = new DecimalFormat("0.##", DecimalFormatSymbols.getInstance(Locale.US)).format(reward.getChance());
         String cmdStr = reward.getCommands().isEmpty() ? "Brak" : reward.getCommands().get(0);
         String mode = reward.shouldGiveItem() ? "Przedmiot" : "Komenda";
 

@@ -91,7 +91,7 @@ public final class ConfirmInv {
                     .name(cfg.infoItem.name)
                     .lore(cfg.infoItem.lore)
                     .build();
-            gui.setItem(cfg.infoItem.slot, new GuiItem(icon, e -> e.setCancelled(true)));
+            gui.setItem(cfg.infoItem.slot, new GuiItem(icon));
         }
 
         if (cfg.items != null) {
@@ -104,10 +104,10 @@ public final class ConfirmInv {
                         .name(item.name)
                         .lore(item.lore != null ? new ArrayList<>(item.lore) : new ArrayList<>())
                         .build();
-                gui.setItem(item.slot, new GuiItem(stack, e -> {
-                    e.setCancelled(true);
-                    handleOpenAction(viewer, crate, amount, isCreate, battle, action);
-                }));
+                gui.setItem(item.slot, new GuiItem(stack));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> handleOpenAction(viewer, crate, amount, isCreate, battle, action));
+                }
             });
         }
 
@@ -180,7 +180,7 @@ public final class ConfirmInv {
                     .name(cfg.infoItem.name)
                     .lore(cfg.infoItem.lore)
                     .build();
-            gui.setItem(cfg.infoItem.slot, new GuiItem(icon, e -> e.setCancelled(true)));
+            gui.setItem(cfg.infoItem.slot, new GuiItem(icon));
         }
 
         if (cfg.items != null) {
@@ -193,10 +193,10 @@ public final class ConfirmInv {
                         .name(item.name)
                         .lore(item.lore != null ? new ArrayList<>(item.lore) : new ArrayList<>())
                         .build();
-                gui.setItem(item.slot, new GuiItem(stack, e -> {
-                    e.setCancelled(true);
-                    handleAction(viewer, opponent, crate, amount, isSend, challenge, action);
-                }));
+                gui.setItem(item.slot, new GuiItem(stack));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> handleAction(viewer, opponent, crate, amount, isSend, challenge, action));
+                }
             });
         }
 
@@ -261,3 +261,4 @@ public final class ConfirmInv {
         return plugin.getConfigService().getLangConfig();
     }
 }
+

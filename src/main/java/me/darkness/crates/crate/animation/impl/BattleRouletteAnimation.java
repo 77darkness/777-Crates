@@ -13,7 +13,6 @@ import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +29,12 @@ public final class BattleRouletteAnimation extends CrateAnimation {
 
     private Gui gui;
     private List<List<CrateReward>> lanes;
+    private GuiItem[][] laneItems;
     private int[] laneOffsets;
-    private int tick = 0, delay = 2;
+    private final int[] rowMapping;
+
+    private int localTick = 0, delay = 2;
+    private boolean stopping = false;
 
     public BattleRouletteAnimation(CratesPlugin plugin, BattleService battleService, Player player, Crate crate, List<CrateReward> winners) {
         super(plugin, player, crate, winners != null && !winners.isEmpty() ? winners.get(0) : null);
@@ -49,6 +52,7 @@ public final class BattleRouletteAnimation extends CrateAnimation {
             case 3 -> 5;
             default -> this.massCount >= 4 ? 6 : 3;
         };
+        this.rowMapping = RouletteUtil.rowMappingForCount(this.massCount);
     }
 
     @Override
@@ -56,6 +60,16 @@ public final class BattleRouletteAnimation extends CrateAnimation {
         this.lanes = winners.stream()
                 .map(w -> RouletteUtil.buildLane(crate.getRewards(), w, 50))
                 .toList();
+
+        this.laneItems = new GuiItem[lanes.size()][];
+        for (int i = 0; i < lanes.size(); i++) {
+            List<CrateReward> lane = lanes.get(i);
+            GuiItem[] items = new GuiItem[lane.size()];
+            for (int j = 0; j < lane.size(); j++) {
+                items[j] = new GuiItem(lane.get(j).getDisplayItem());
+            }
+            laneItems[i] = items;
+        }
 
         this.laneOffsets = new int[lanes.size()];
         for (int i = 0; i < laneOffsets.length; i++) {
@@ -71,7 +85,6 @@ public final class BattleRouletteAnimation extends CrateAnimation {
 
         RouletteUtil.applyStaticItems(gui, cfg, guiRows, massCount);
 
-        int[] rowMapping = RouletteUtil.rowMappingForCount(massCount);
         for (int i = 0; i < lanes.size(); i++) {
             int rowBase = rowMapping[i] * 9;
             List<CrateReward> lane = lanes.get(i);
@@ -80,40 +93,42 @@ public final class BattleRouletteAnimation extends CrateAnimation {
             }
         }
         this.gui.open(player);
-
-        this.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            tick++;
-            if (tick % delay == 0) {
-                for (int i = 0; i < laneOffsets.length; i++) {
-                    laneOffsets[i] = (laneOffsets[i] + 1) % lanes.get(i).size();
-                }
-                updateDisplay();
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
-                if (tick > 75 && tick % 4 == 0) delay++;
-            }
-            if (tick >= 100) stop();
-        }, 0L, 1L);
     }
 
-    private void updateDisplay() {
-        int[] rowMapping = RouletteUtil.rowMappingForCount(massCount);
-        boolean isFinal = tick >= 96;
+    @Override
+    public void tick() {
+        if (stopping) return;
+
+        localTick++;
+        if (localTick % delay == 0) {
+            for (int i = 0; i < laneOffsets.length; i++) {
+                laneOffsets[i] = (laneOffsets[i] + 1) % lanes.get(i).size();
+            }
+            updateDisplay(localTick >= 96);
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
+            if (localTick > 75 && localTick % 4 == 0) delay++;
+        }
+        if (localTick >= 100) stop();
+    }
+
+    private void updateDisplay(boolean isFinal) {
         int centerSlot = localSlots[localSlots.length / 2];
 
         for (int i = 0; i < lanes.size(); i++) {
             int rowBase = rowMapping[i] * 9;
-            List<CrateReward> lane = lanes.get(i);
+            int laneSize = lanes.get(i).size();
+            GuiItem[] items = laneItems[i];
             for (int slot : localSlots) {
-                ItemStack item = (isFinal && slot == centerSlot)
-                        ? winners.get(i).getDisplayItem()
-                        : lane.get((laneOffsets[i] + slot) % lane.size()).getDisplayItem();
-                gui.updateItem(slot + rowBase, new GuiItem(item));
+                GuiItem item = (isFinal && slot == centerSlot)
+                        ? new GuiItem(winners.get(i).getDisplayItem())
+                        : items[(laneOffsets[i] + slot) % laneSize];
+                gui.updateItem(slot + rowBase, item);
             }
         }
     }
 
     private void stop() {
-        task.cancel();
+        stopping = true;
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             player.closeInventory();

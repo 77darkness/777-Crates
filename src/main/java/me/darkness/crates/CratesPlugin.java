@@ -12,6 +12,8 @@ import me.darkness.crates.crate.CrateService;
 import me.darkness.crates.crate.animation.AnimationService;
 import me.darkness.crates.crate.reward.RewardExecutor;
 import me.darkness.crates.hook.HologramHook;
+import me.darkness.crates.inv.MassOpenInv;
+import me.darkness.crates.inv.PreviewInv;
 import me.darkness.crates.listener.ChatInputListener;
 import me.darkness.crates.listener.InventoryCloseListener;
 import me.darkness.crates.listener.PlayerInteractionListener;
@@ -33,6 +35,9 @@ public final class CratesPlugin extends JavaPlugin {
     private BattleService battleService;
     private KeyService keyService;
     private EditSessionManager editSessionManager;
+    private PlayerInteractionListener playerInteractionListener;
+    private PreviewInv previewInv;
+    private MassOpenInv massOpenInv;
 
     @Override
     public void onEnable() {
@@ -79,6 +84,8 @@ public final class CratesPlugin extends JavaPlugin {
         this.animationService = new AnimationService(this);
         this.rewardExecutor = new RewardExecutor(this);
         this.battleService = new BattleService(this, this.crateService, this.keyService);
+        this.massOpenInv = new MassOpenInv(this);
+        this.previewInv = new PreviewInv(this, this.massOpenInv);
     }
 
     private void loadConfiguration() {
@@ -113,10 +120,23 @@ public final class CratesPlugin extends JavaPlugin {
 
     private void registerListeners() {
         PluginManager pm = this.getServer().getPluginManager();
-        pm.registerEvents(new PlayerInteractionListener(this, this.crateService), this);
-        pm.registerEvents(new InventoryCloseListener(this), this);
+        this.playerInteractionListener = new PlayerInteractionListener(this, this.crateService, this.previewInv);
+        pm.registerEvents(this.playerInteractionListener, this);
+        pm.registerEvents(new InventoryCloseListener(this, this.playerInteractionListener), this);
         pm.registerEvents(new ChatInputListener(this), this);
         pm.registerEvents(new PlayerQuitListener(this), this);
+    }
+
+    public PlayerInteractionListener getPlayerInteractionListener() {
+        return this.playerInteractionListener;
+    }
+
+    public PreviewInv getPreviewInv() {
+        return this.previewInv;
+    }
+
+    public MassOpenInv getMassOpenInv() {
+        return this.massOpenInv;
     }
 
     public ConfigService getConfigService() {

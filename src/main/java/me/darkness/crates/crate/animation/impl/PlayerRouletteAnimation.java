@@ -22,8 +22,6 @@ import java.util.UUID;
 
 public final class PlayerRouletteAnimation extends CrateAnimation {
 
-    private static final int[] DISPLAY_SLOTS = {10, 11, 12, 13, 14, 15, 16};
-
     private final UUID p1;
     private final UUID p2;
     private final UUID forcedWinner;
@@ -32,6 +30,7 @@ public final class PlayerRouletteAnimation extends CrateAnimation {
 
     private Gui gui;
     private int tick = 0, delay = 2, step = 0;
+    private boolean stopping = false;
 
     public PlayerRouletteAnimation(CratesPlugin plugin, Player viewer, Crate crate,
                                    UUID p1, UUID p2, Map<UUID, String> headBase64Cache,
@@ -52,21 +51,24 @@ public final class PlayerRouletteAnimation extends CrateAnimation {
                 .disableAllInteractions()
                 .create();
         this.gui.open(player);
+    }
 
-        this.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            tick++;
-            if (tick % delay == 0) {
-                update(step % 2 == 0 ? p1 : p2);
-                step++;
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.5f);
-                if (tick > 70 && tick % 6 == 0) delay++;
-            }
-            if (tick >= 100) stop();
-        }, 0L, 1L);
+    @Override
+    public void tick() {
+        if (stopping) return;
+
+        tick++;
+        if (tick % delay == 0) {
+            update(step % 2 == 0 ? p1 : p2);
+            step++;
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.5f);
+            if (tick > 70 && tick % 6 == 0) delay++;
+        }
+        if (tick >= 100) stop();
     }
 
     private void stop() {
-        task.cancel();
+        stopping = true;
         update(forcedWinner);
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -113,7 +115,7 @@ public final class PlayerRouletteAnimation extends CrateAnimation {
                 : fallbackHead(uuid);
         if (head == null) head = fallbackHead(uuid);
 
-        for (int s : DISPLAY_SLOTS) {
+        for (int s = 10; s <= 16; s++) {
             gui.updateItem(s, new GuiItem(head));
         }
     }

@@ -26,9 +26,12 @@ public abstract class CrateAnimation {
 
     public abstract void start();
 
+    public void tick() {}
+
     public void cancel() {
         if (this.task != null && !this.task.isCancelled()) {
             this.task.cancel();
+            this.task = null;
         }
     }
 

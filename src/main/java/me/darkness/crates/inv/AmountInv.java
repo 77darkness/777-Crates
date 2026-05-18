@@ -59,10 +59,10 @@ public final class AmountInv {
             cfg.items.values().forEach(item -> {
                 if (item == null || item.slot < 0 || item.slot >= size) return;
                 String action = item.action == null ? "NONE" : item.action.toUpperCase(Locale.ROOT);
-                gui.setItem(item.slot, new GuiItem(toItemStack(item, ph), e -> {
-                    e.setCancelled(true);
-                    handleAction(challenger, crate, session, action, isOpen);
-                }));
+                gui.setItem(item.slot, new GuiItem(toItemStack(item, ph)));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> handleAction(challenger, crate, session, action, isOpen));
+                }
             });
         }
 

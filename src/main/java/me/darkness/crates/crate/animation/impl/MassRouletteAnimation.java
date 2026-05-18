@@ -12,7 +12,6 @@ import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -26,8 +25,12 @@ public final class MassRouletteAnimation extends CrateAnimation {
 
     private Gui gui;
     private List<List<CrateReward>> lanes;
+    private GuiItem[][] laneItems;
     private int[] laneOffsets;
-    private int tick = 0, delay = 2;
+    private final int[] rowOffsets;
+
+    private int localTick = 0, delay = 2;
+    private boolean stopping = false;
 
     public MassRouletteAnimation(CratesPlugin plugin, Player player, Crate crate, List<CrateReward> winners) {
         super(plugin, player, crate, winners != null && !winners.isEmpty() ? winners.get(0) : null);
@@ -37,20 +40,30 @@ public final class MassRouletteAnimation extends CrateAnimation {
         this.localSlots = RouletteUtil.resolveLocalSlots(
                 plugin.getConfigService().getRouletteInv().displaySlots,
                 List.of(10, 11, 12, 13, 14, 15, 16));
+        this.rowOffsets = RouletteUtil.rowMappingForCount(massCount);
     }
 
     @Override
     public void start() {
         int centerLocalSlot = localSlots[localSlots.length / 2];
-        int simulatedFinalOffset = simulateFinalOffset();
 
         List<List<CrateReward>> mutableLanes = new java.util.ArrayList<>();
         for (int i = 0; i < winners.size(); i++) {
             List<CrateReward> lane = RouletteUtil.buildLane(crate.getRewards(), winners.get(i), 60);
-            RouletteUtil.placeWinnerForCenter(lane, winners.get(i), centerLocalSlot, simulatedFinalOffset);
+            RouletteUtil.placeWinnerForCenter(lane, winners.get(i), centerLocalSlot, 48);
             mutableLanes.add(lane);
         }
         this.lanes = java.util.Collections.unmodifiableList(mutableLanes);
+
+        this.laneItems = new GuiItem[this.lanes.size()][];
+        for (int i = 0; i < this.lanes.size(); i++) {
+            List<CrateReward> lane = this.lanes.get(i);
+            GuiItem[] items = new GuiItem[lane.size()];
+            for (int j = 0; j < lane.size(); j++) {
+                items[j] = new GuiItem(lane.get(j).getDisplayItem());
+            }
+            this.laneItems[i] = items;
+        }
 
         this.laneOffsets = new int[lanes.size()];
         for (int i = 0; i < laneOffsets.length; i++) {
@@ -66,7 +79,6 @@ public final class MassRouletteAnimation extends CrateAnimation {
 
         RouletteUtil.applyStaticItems(gui, cfg, rows, massCount);
 
-        int[] rowOffsets = RouletteUtil.rowMappingForCount(massCount);
         for (int i = 0; i < lanes.size(); i++) {
             int rowBase = rowOffsets[i] * 9;
             List<CrateReward> lane = lanes.get(i);
@@ -75,58 +87,49 @@ public final class MassRouletteAnimation extends CrateAnimation {
             }
         }
         this.gui.open(player);
-
-        this.task = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
-            tick++;
-            if (tick % delay == 0) {
-                for (int i = 0; i < laneOffsets.length; i++) {
-                    laneOffsets[i] = (laneOffsets[i] + 1) % lanes.get(i).size();
-                }
-                updateDisplay();
-                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.1f);
-                if (tick > 70 && tick % 5 == 0) delay++;
-            }
-            if (tick >= 105) stop();
-        }, 0L, 1L);
     }
 
-    private int simulateFinalOffset() {
-        int simTick = 0, simDelay = 2, simOffset = 0;
-        while (simTick < 105) {
-            simTick++;
-            if (simTick % simDelay == 0) {
-                simOffset++;
-                if (simTick > 70 && simTick % 5 == 0) simDelay++;
+    @Override
+    public void tick() {
+        if (stopping) return;
+
+        localTick++;
+        if (localTick % delay == 0) {
+            for (int i = 0; i < laneOffsets.length; i++) {
+                laneOffsets[i] = (laneOffsets[i] + 1) % lanes.get(i).size();
             }
+            updateDisplay();
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.1f);
+            if (localTick > 70 && localTick % 5 == 0) delay++;
         }
-        return simOffset;
+        if (localTick >= 105) stop();
     }
+
 
     private void updateDisplay() {
-        int[] rowOffsets = RouletteUtil.rowMappingForCount(massCount);
-
         for (int i = 0; i < lanes.size(); i++) {
             int rowBase = rowOffsets[i] * 9;
-            List<CrateReward> lane = lanes.get(i);
+            int laneSize = lanes.get(i).size();
+            GuiItem[] items = laneItems[i];
             for (int slot : localSlots) {
-                ItemStack item = lane.get((laneOffsets[i] + slot) % lane.size()).getDisplayItem();
-                gui.updateItem(slot + rowBase, new GuiItem(item));
+                gui.updateItem(slot + rowBase, items[(laneOffsets[i] + slot) % laneSize]);
             }
         }
     }
 
     private void stop() {
-        task.cancel();
+        stopping = true;
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            player.closeInventory();
-            winners.forEach(r -> plugin.getRewardExecutor().giveReward(player, crate, r));
             finish();
+            player.closeInventory();
         }, 40L);
     }
 
     @Override
-    protected void onFinish() {}
+    protected void onFinish() {
+        winners.forEach(r -> plugin.getRewardExecutor().giveReward(player, crate, r));
+    }
 
     @Override
     protected void onCancel() {

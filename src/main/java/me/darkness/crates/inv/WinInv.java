@@ -62,10 +62,10 @@ public final class WinInv {
             if (item == null || item.slot < 0 || item.slot >= size) return;
 
             String action = item.action == null ? "NONE" : item.action.toUpperCase(Locale.ROOT);
-            gui.setItem(item.slot, new GuiItem(createItem(item), e -> {
-                e.setCancelled(true);
-                handleAction(action, player, crate);
-            }));
+            gui.setItem(item.slot, new GuiItem(createItem(item)));
+            if (!action.equals("NONE")) {
+                gui.addSlotAction(item.slot, event -> handleAction(action, player, crate));
+            }
         });
     }
 
@@ -81,7 +81,7 @@ public final class WinInv {
                     return;
                 }
 
-                if (plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
+                if (!plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
                     player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
                     lang.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));
                     player.closeInventory();

@@ -22,9 +22,6 @@ import java.util.*;
 
 public final class OpenBattleInv {
 
-    private static final DateTimeFormatter TIME_FMT =
-            DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
-
     private final CratesPlugin plugin;
     private final BattleService battleService;
 
@@ -53,10 +50,10 @@ public final class OpenBattleInv {
                         .name(item.name)
                         .lore(item.lore != null ? new ArrayList<>(item.lore) : new ArrayList<>())
                         .build();
-                gui.setItem(item.slot, new GuiItem(stack, e -> {
-                    e.setCancelled(true);
-                    handleStaticAction(player, action);
-                }));
+                gui.setItem(item.slot, new GuiItem(stack));
+                if (!action.equals("NONE")) {
+                    gui.addSlotAction(item.slot, event -> handleStaticAction(player, action));
+                }
             });
         }
 
@@ -101,7 +98,7 @@ public final class OpenBattleInv {
 
             Player creator = plugin.getServer().getPlayer(battle.getCreator());
             String creatorName = creator != null ? creator.getName() : "?";
-            String time = TIME_FMT.format(Instant.ofEpochMilli(battle.getCreatedAtMillis()));
+            String time = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(battle.getCreatedAtMillis()));
 
             Map<String, String> ph = Map.of(
                     "crate", crate.getDisplayName(),
@@ -114,10 +111,8 @@ public final class OpenBattleInv {
 
             final int finalSlot = slots.get(slotIndex);
             final OpenChallenge finalBattle = battle;
-            gui.setItem(finalSlot, new GuiItem(icon, e -> {
-                e.setCancelled(true);
-                handleJoin(player, finalBattle, crate);
-            }));
+            gui.setItem(finalSlot, new GuiItem(icon));
+            gui.addSlotAction(finalSlot, e -> handleJoin(player, finalBattle, crate));
             slotIndex++;
         }
     }

@@ -8,11 +8,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class CrateService {
+    
+    private record LocKey(UUID world, int x, int y, int z) {}
 
     private final Map<String, Crate> crates = new HashMap<>();
-    private final Map<Location, Crate> cratesByLocation = new HashMap<>();
+    private final Map<LocKey, Crate> cratesByLocation = new HashMap<>();
 
     public void registerCrate(Crate crate) {
         this.crates.put(crate.getName().toLowerCase(), crate);
@@ -21,7 +24,7 @@ public final class CrateService {
 
     public void unregisterCrate(String name) {
         Crate crate = this.crates.remove(name.toLowerCase());
-        if (crate != null) crate.getLocations().forEach(loc -> cratesByLocation.remove(normalize(loc)));
+        if (crate != null) crate.getLocations().forEach(loc -> cratesByLocation.remove(toKey(loc)));
     }
 
     public void addCrateLocation(String name, Location location) {
@@ -37,7 +40,8 @@ public final class CrateService {
     }
 
     public Optional<Crate> getCrateByLocation(Location location) {
-        return Optional.ofNullable(this.cratesByLocation.get(normalize(location)));
+        LocKey key = toKey(location);
+        return key == null ? Optional.empty() : Optional.ofNullable(this.cratesByLocation.get(key));
     }
 
     public Collection<Crate> getAllCrates() {
@@ -65,19 +69,19 @@ public final class CrateService {
         Crate updated = add ? old.withAddedLocation(location) : old.withRemovedLocation(location);
         this.crates.put(name.toLowerCase(), updated);
 
-        old.getLocations().forEach(loc -> cratesByLocation.remove(normalize(loc)));
+        old.getLocations().forEach(loc -> cratesByLocation.remove(toKey(loc)));
         rebuildLocationIndex(updated);
     }
 
     private void rebuildLocationIndex(Crate crate) {
         crate.getLocations().forEach(loc -> {
-            Location key = normalize(loc);
+            LocKey key = toKey(loc);
             if (key != null) cratesByLocation.put(key, crate);
         });
     }
 
-    private Location normalize(Location location) {
+    private LocKey toKey(Location location) {
         if (location == null || location.getWorld() == null) return null;
-        return new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
+        return new LocKey(location.getWorld().getUID(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 }
