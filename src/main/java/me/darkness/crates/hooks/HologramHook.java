@@ -16,10 +16,10 @@ public final class HologramHook {
 
     public HologramHook(CratesPlugin plugin) {
         Logger logger = new Logger(plugin);
-        this.enabled = plugin.getServer().getPluginManager().getPlugin("DecentHolograms") != null;
-        this.holograms = new HashMap<>();
+        enabled = plugin.getServer().getPluginManager().getPlugin("DecentHolograms") != null;
+        holograms = new HashMap<>();
 
-        if (this.enabled) {
+        if (enabled) {
             logger.success("&fZaładowano hologramy. &8(&aDecentHolograms&8)");
         } else {
             logger.error("&cNie znaleziono pluginu &4DecentHolograms! &cHologramy zostały wyłączone!");
@@ -27,52 +27,52 @@ public final class HologramHook {
     }
 
     public boolean isEnabled() {
-        return this.enabled;
+        return enabled;
     }
 
     public void createHolograms(Collection<Crate> crates) {
-        if (!this.enabled) {
+        if (!enabled) {
             return;
         }
 
         for (Crate crate : crates) {
             if (!crate.getLocations().isEmpty()) {
-                this.createHologram(crate);
+                createHologram(crate);
             }
         }
     }
 
     public void createHologram(Crate crate) {
-        if (!this.enabled) {
+        if (!enabled) {
             return;
         }
 
         boolean enabledForCrate = crate.isHologramEnabled();
 
         if (!enabledForCrate) {
-            this.removeHologram(crate.getName());
+            removeHologram(crate.getName());
             return;
         }
 
         List<Location> crateLocations = crate.getLocations();
         if (crateLocations.isEmpty()) {
-            this.removeHologram(crate.getName());
+            removeHologram(crate.getName());
             return;
         }
 
         List<String> sourceLines = crate.getHologramLines();
         if (sourceLines.isEmpty()) {
-            this.removeHologram(crate.getName());
+            removeHologram(crate.getName());
             return;
         }
 
-        this.removeHologram(crate.getName());
+        removeHologram(crate.getName());
 
         List<String> lines = new ArrayList<>();
         for (String line : sourceLines) {
             String processedLine = (line == null ? "" : line)
-                .replace("{crate}", crate.getDisplayName())
-                .replace('&', '§');
+                    .replace("{crate}", crate.getDisplayName())
+                    .replace('&', '§');
             lines.add(processedLine);
         }
 
@@ -91,27 +91,27 @@ public final class HologramHook {
             String hologramId = "777crate_" + crate.getName().toLowerCase(Locale.ROOT) + "_" + index;
             Hologram hologram = DHAPI.createHologram(hologramId, location, lines);
 
-            this.holograms.put(mapKey(crate.getName(), index), hologram);
+            holograms.put(mapKey(crate.getName(), index), hologram);
             index++;
         }
     }
 
     public void removeHologram(String crateName) {
-        if (!this.enabled) {
+        if (!enabled) {
             return;
         }
 
         String prefix = crateName.toLowerCase(Locale.ROOT) + "#";
         List<String> toRemove = new ArrayList<>();
 
-        for (String key : this.holograms.keySet()) {
+        for (String key : holograms.keySet()) {
             if (key.startsWith(prefix)) {
                 toRemove.add(key);
             }
         }
 
         for (String key : toRemove) {
-            Hologram hologram = this.holograms.remove(key);
+            Hologram hologram = holograms.remove(key);
             if (hologram != null) {
                 hologram.delete();
             }
@@ -119,14 +119,14 @@ public final class HologramHook {
     }
 
     public void removeAll() {
-        if (!this.enabled) {
+        if (!enabled) {
             return;
         }
 
-        for (Hologram hologram : this.holograms.values()) {
+        for (Hologram hologram : holograms.values()) {
             hologram.delete();
         }
-        this.holograms.clear();
+        holograms.clear();
     }
 
     private String mapKey(String crateName, int index) {

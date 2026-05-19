@@ -5,17 +5,17 @@ import org.bukkit.Location;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class CrateService {
 
     private record LocKey(UUID world, int x, int y, int z) {}
 
-    private final Map<String, Crate> crates = new HashMap<>();
-    private final Map<LocKey, Crate> byLoc = new HashMap<>();
+    private final Map<String, Crate> crates = new ConcurrentHashMap<>();
+    private final Map<LocKey, Crate> byLoc = new ConcurrentHashMap<>();
 
     public void registerCrate(Crate crate) {
         crates.put(crate.getName().toLowerCase(), crate);

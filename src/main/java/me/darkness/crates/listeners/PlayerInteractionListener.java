@@ -39,9 +39,9 @@ public final class PlayerInteractionListener implements Listener {
         if (block == null) return;
 
         Player player = event.getPlayer();
-        if (this.plugin.getAnimationService().hasActiveAnimation(player)) return;
+        if (plugin.getAnimationService().hasActiveAnimation(player)) return;
 
-        this.crateService.getCrateByLocation(block.getLocation()).ifPresent(crate -> {
+        crateService.getCrateByLocation(block.getLocation()).ifPresent(crate -> {
             event.setCancelled(true);
 
             long now = System.currentTimeMillis();
@@ -49,7 +49,7 @@ public final class PlayerInteractionListener implements Listener {
             if (last != null && now - last < 750L) return;
             lastOpen.put(player.getUniqueId(), now);
 
-            this.previewInv.open(player, crate);
+            previewInv.open(player, crate);
         });
     }
 

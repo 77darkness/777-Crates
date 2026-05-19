@@ -9,9 +9,9 @@ import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class AnimationService {
 
@@ -21,8 +21,8 @@ public final class AnimationService {
 
     public AnimationService(CratesPlugin plugin) {
         this.plugin = plugin;
-        this.activeAnimations = new HashMap<>();
-        this.globalTask = SchedulerUtil.runTimer(plugin, () -> {
+        activeAnimations = new ConcurrentHashMap<>();
+        globalTask = SchedulerUtil.runTimer(plugin, () -> {
             if (activeAnimations.isEmpty()) return;
             CrateAnimation[] snapshot = activeAnimations.values().toArray(new CrateAnimation[0]);
             for (CrateAnimation animation : snapshot) {
@@ -32,12 +32,12 @@ public final class AnimationService {
     }
 
     public void startAnimation(Player player, Crate crate, CrateReward reward) {
-        if (this.hasActiveAnimation(player)) {
+        if (hasActiveAnimation(player)) {
             return;
         }
 
-        CrateAnimation animation = this.createAnimation(crate.getAnimationType(), player, crate, reward);
-        this.activeAnimations.put(player.getUniqueId(), animation);
+        CrateAnimation animation = createAnimation(crate.getAnimationType(), player, crate, reward);
+        activeAnimations.put(player.getUniqueId(), animation);
         animation.start();
     }
 
@@ -45,35 +45,35 @@ public final class AnimationService {
         if (player == null || animation == null) {
             return;
         }
-        if (this.hasActiveAnimation(player)) {
+        if (hasActiveAnimation(player)) {
             return;
         }
 
-        this.activeAnimations.put(player.getUniqueId(), animation);
+        activeAnimations.put(player.getUniqueId(), animation);
         animation.start();
     }
 
     public boolean hasActiveAnimation(Player player) {
-        return this.activeAnimations.containsKey(player.getUniqueId());
+        return activeAnimations.containsKey(player.getUniqueId());
     }
 
     public void removeAnimation(Player player) {
-        this.activeAnimations.remove(player.getUniqueId());
+        activeAnimations.remove(player.getUniqueId());
     }
 
     public void cancelAll() {
-        this.activeAnimations.values().forEach(CrateAnimation::cancel);
-        this.activeAnimations.clear();
-        if (this.globalTask != null) {
-            this.globalTask.cancel();
-            this.globalTask = null;
+        activeAnimations.values().forEach(CrateAnimation::cancel);
+        activeAnimations.clear();
+        if (globalTask != null) {
+            globalTask.cancel();
+            globalTask = null;
         }
     }
 
     private CrateAnimation createAnimation(AnimationType type, Player player, Crate crate, CrateReward reward) {
         return switch (type) {
-            case ROULETTE -> new RouletteAnimation(this.plugin, player, crate, reward);
-            case WITHOUT -> new WithoutAnimation(this.plugin, player, crate, reward);
+            case ROULETTE -> new RouletteAnimation(plugin, player, crate, reward);
+            case WITHOUT -> new WithoutAnimation(plugin, player, crate, reward);
         };
     }
 }

@@ -3,11 +3,13 @@ package me.darkness.crates.crate.battle;
 import me.darkness.crates.CratesPlugin;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.CrateService;
+import me.darkness.crates.configuration.LangConfig;
 import me.darkness.crates.crate.key.KeyService;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,14 +19,14 @@ public final class BattleService {
     private final CratesPlugin plugin;
     private final CrateService crateService;
     private final BattleState state;
-    private final MatchManager coordinator;
+    private final MatchManager matchManager;
     private final Map<UUID, BattleCountdown> activeCountdowns = new ConcurrentHashMap<>();
 
     public BattleService(CratesPlugin plugin, CrateService crateService, KeyService keyService) {
         this.plugin = plugin;
         this.crateService = crateService;
         this.state = new BattleState();
-        this.coordinator = new MatchManager(plugin, this.state, keyService);
+        this.matchManager = new MatchManager(plugin, this.state, keyService);
     }
     
     public BattleSession createSession(UUID owner, UUID opponent) {
@@ -61,7 +63,7 @@ public final class BattleService {
             return;
         }
 
-        if (coordinator.startMatch(challenge, crateService::getCrate)) {
+        if (matchManager.startMatch(challenge, crateService::getCrate)) {
             cancelChallenge(challenge, Challenge.Status.ACCEPTED);
         }
     }
@@ -93,22 +95,22 @@ public final class BattleService {
     }
 
     public void rouletteFinished(UUID who) {
-        coordinator.rouletteFinished(who, match -> coordinator.finishMassOpen(match, crateService::getCrate));
+        matchManager.rouletteFinished(who, match -> matchManager.finishMassOpen(match, crateService::getCrate));
     }
 
     public void playerRouletteFinished(UUID viewer, UUID winner) {
-        coordinator.playerRouletteFinished(viewer, winner);
+        matchManager.playerRouletteFinished(viewer, winner);
     }
 
     public void noKeys(Player player, int have, int need) {
-        coordinator.noKeys(player, have, need);
+        matchManager.noKeys(player, have, need);
     }
 
     public void cleanupForPlayer(UUID playerId) {
         state.removeSession(playerId);
         state.removeChallengeForPlayer(playerId);
         state.removeOpenChallengeByCreator(playerId);
-        coordinator.cancelForPlayer(playerId);
+        matchManager.cancelForPlayer(playerId);
     }
 
     public Collection<OpenChallenge> getOpenChallenges() {
@@ -133,15 +135,15 @@ public final class BattleService {
     public void shutdown() {
         for (Map.Entry<UUID, Match> entry : state.getActiveMatchesCopy().entrySet()) {
             Match match = entry.getValue();
-            UUID winner = match.getWinnerUuid() != null ? match.getWinnerUuid() : match.getPlayerA();
-            coordinator.playerRouletteFinished(entry.getKey(), winner);
+            UUID winner = Objects.requireNonNullElse(match.getWinnerUuid(), match.getPlayerA());
+            matchManager.playerRouletteFinished(entry.getKey(), winner);
         }
         state.clearAll();
     }
 
     private void notifyNoCrate(Challenge challenge) {
-        var lang = plugin.getConfigService().lang();
-        var ph = Map.of("crate", challenge.getCrateName() == null ? "" : challenge.getCrateName());
+        LangConfig lang = plugin.getConfigService().lang();
+        Map<String, String> ph = Map.of("crate", challenge.getCrateName());
 
         Player a = plugin.getServer().getPlayer(challenge.getChallenger());
         Player b = plugin.getServer().getPlayer(challenge.getTarget());

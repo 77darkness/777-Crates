@@ -12,6 +12,7 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -106,9 +107,8 @@ final class MatchManager {
         Match match = state.getMatchByPlayer(playerId);
         if (match == null) return;
 
-        UUID winner = match.getWinnerUuid() != null
-                ? match.getWinnerUuid()
-                : (match.getPlayerA().equals(playerId) ? match.getPlayerB() : match.getPlayerA());
+        UUID fallback = match.getPlayerA().equals(playerId) ? match.getPlayerB() : match.getPlayerA();
+        UUID winner = Objects.requireNonNullElse(match.getWinnerUuid(), fallback);
 
         giveRewards(winner, match);
 
@@ -185,10 +185,10 @@ final class MatchManager {
     }
 
     private UUID resolveWinner(Match match) {
-        return match.getWinnerUuid() != null ? match.getWinnerUuid() : match.getPlayerA();
+        return Objects.requireNonNullElse(match.getWinnerUuid(), match.getPlayerA());
     }
 
     private UUID resolveWinner(Match match, UUID fallback) {
-        return match.getWinnerUuid() != null ? match.getWinnerUuid() : fallback;
+        return Objects.requireNonNullElse(match.getWinnerUuid(), fallback);
     }
 }
