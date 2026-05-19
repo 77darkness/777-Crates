@@ -1,7 +1,8 @@
 package me.darkness.crates.crate.battle;
 
+import dev.darkness.utilities.task.SchedulerUtil;
 import me.darkness.crates.CratesPlugin;
-import me.darkness.crates.configuration.Lang;
+import me.darkness.crates.configuration.LangConfig;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.animation.impl.BattleRouletteAnimation;
 import me.darkness.crates.crate.animation.impl.PlayerRouletteAnimation;
@@ -10,7 +11,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,8 +31,6 @@ final class MatchManager {
     }
 
     boolean startMatch(Challenge challenge, Function<String, Optional<Crate>> crateFinder) {
-        if (challenge == null) return false;
-
         Player playerA = Bukkit.getPlayer(challenge.getChallenger());
         Player playerB = Bukkit.getPlayer(challenge.getTarget());
         if (playerA == null || playerB == null) return false;
@@ -82,15 +80,11 @@ final class MatchManager {
         plugin.getAnimationService().removeAnimation(a);
         plugin.getAnimationService().removeAnimation(b);
 
-        Map<UUID, String> headCache = new HashMap<>();
-        headCache.put(match.getPlayerA(), PlayerRouletteAnimation.buildHead(match.getPlayerA()));
-        headCache.put(match.getPlayerB(), PlayerRouletteAnimation.buildHead(match.getPlayerB()));
-
         Crate crate = crateFinder.apply(match.getCrateName()).orElse(null);
 
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
-            plugin.getAnimationService().startCustomAnimation(a, winnerAnimation(a, crate, match, headCache, winner));
-            plugin.getAnimationService().startCustomAnimation(b, winnerAnimation(b, crate, match, headCache, winner));
+        SchedulerUtil.run(plugin, () -> {
+            plugin.getAnimationService().startAnimation(a, winnerAnimation(a, crate, match, winner));
+            plugin.getAnimationService().startAnimation(b, winnerAnimation(b, crate, match, winner));
         });
     }
 
@@ -109,8 +103,6 @@ final class MatchManager {
     }
 
     void cancelForPlayer(UUID playerId) {
-        if (playerId == null) return;
-
         Match match = state.getMatchByPlayer(playerId);
         if (match == null) return;
 
@@ -127,8 +119,8 @@ final class MatchManager {
     }
 
     void noKeys(Player player, int have, int need) {
-        Lang lang = plugin.getConfigService().getLangConfig();
-        lang.noKey.send(player, Map.of("have", String.valueOf(have), "need", String.valueOf(need)));
+        LangConfig langConfig = plugin.getConfigService().lang();
+        langConfig.noKey.send(player, Map.of("have", String.valueOf(have), "need", String.valueOf(need)));
         player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
     }
 
@@ -149,18 +141,18 @@ final class MatchManager {
         int keysB = keyService.countKeys(b, crate.getName());
         if (keysB < amount) { noKeys(b, keysB, amount); return false; }
 
-        Lang lang = plugin.getConfigService().getLangConfig();
+        LangConfig langConfig = plugin.getConfigService().lang();
         int freeA = plugin.getRewardExecutor().countFreeSlots(a);
         if (freeA < amount) {
             a.playSound(a.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            lang.inventoryFull.send(a);
+            langConfig.inventoryFull.send(a);
             return false;
         }
 
         int freeB = plugin.getRewardExecutor().countFreeSlots(b);
         if (freeB < amount) {
             b.playSound(b.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-            lang.inventoryFull.send(b);
+            langConfig.inventoryFull.send(b);
             return false;
         }
 
@@ -171,17 +163,17 @@ final class MatchManager {
     private void startBattleAnimations(Player a, Player b, Crate crate, Match match) {
         a.closeInventory();
         b.closeInventory();
-        plugin.getAnimationService().startCustomAnimation(a,
+        plugin.getAnimationService().startAnimation(a,
                 new BattleRouletteAnimation(plugin, plugin.getBattleService(), a, crate, match.getRewardsA()));
-        plugin.getAnimationService().startCustomAnimation(b,
+        plugin.getAnimationService().startAnimation(b,
                 new BattleRouletteAnimation(plugin, plugin.getBattleService(), b, crate, match.getRewardsB()));
     }
 
-    private PlayerRouletteAnimation winnerAnimation(Player viewer, Crate crate, Match match,
-                                                     Map<UUID, String> headCache, UUID winner) {
+    private PlayerRouletteAnimation winnerAnimation(Player viewer, Crate crate, Match match, UUID winner) {
+        String title = plugin.getConfigService().rouletteInv().winnerTitle;
         return new PlayerRouletteAnimation(plugin, viewer, crate,
-                match.getPlayerA(), match.getPlayerB(), headCache,
-                "&0ʟᴏꜱᴏᴡᴀɴɪᴇ ᴢᴡʏᴄɪᴇᴢᴄʏ...", winner);
+                match.getPlayerA(), match.getPlayerB(),
+                title, winner);
     }
 
     private void giveRewards(UUID winnerUuid, Match match) {

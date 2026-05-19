@@ -10,15 +10,15 @@ public final class Challenge {
     private final UUID target;
     private final String crateName;
     private final int amount;
-    private final long createdAtMillis;
+    private final long createdAt;
     private Status status;
 
-    public Challenge(UUID challenger, UUID target, String crateName, int amount, long createdAtMillis) {
+    public Challenge(UUID challenger, UUID target, String crateName, int amount, long createdAt) {
         this.challenger = challenger;
         this.target = target;
         this.crateName = crateName;
         this.amount = amount;
-        this.createdAtMillis = createdAtMillis;
+        this.createdAt = createdAt;
         this.status = Status.PENDING;
     }
 
@@ -26,7 +26,7 @@ public final class Challenge {
     public UUID getTarget() { return target; }
     public String getCrateName() { return crateName; }
     public int getAmount() { return amount; }
-    public long getCreatedAtMillis() { return createdAtMillis; }
+    public long getCreatedAt() { return createdAt; }
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
 }

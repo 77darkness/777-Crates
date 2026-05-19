@@ -1,5 +1,6 @@
 package me.darkness.crates.crate.key;
 
+import dev.darkness.utilities.item.ItemBuilder;
 import dev.darkness.utilities.item.ItemNbt;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -19,7 +20,9 @@ public final class KeyService {
 
     public ItemStack tagKey(ItemStack item, String crateName) {
         if (item == null) return null;
-        return ItemNbt.set(item, keyTag, PersistentDataType.STRING, Objects.toString(crateName, ""));
+        return ItemBuilder.of(item)
+                .tag(keyTag, PersistentDataType.STRING, Objects.toString(crateName, ""))
+                .build();
     }
 
     public boolean isKey(ItemStack item, String crateName) {
@@ -36,11 +39,10 @@ public final class KeyService {
             if (!isKey(contents[slot], crateName)) continue;
 
             if (contents[slot].getAmount() <= 1) {
-                contents[slot] = null;
+                player.getInventory().setItem(slot, null);
             } else {
                 contents[slot].setAmount(contents[slot].getAmount() - 1);
             }
-            player.getInventory().setContents(contents);
             return true;
         }
         return false;
@@ -69,7 +71,7 @@ public final class KeyService {
 
             int itemAmount = contents[slot].getAmount();
             if (itemAmount <= remaining) {
-                contents[slot] = null;
+                player.getInventory().setItem(slot, null);
                 remaining -= itemAmount;
             } else {
                 contents[slot].setAmount(itemAmount - remaining);
@@ -77,7 +79,6 @@ public final class KeyService {
             }
         }
 
-        player.getInventory().setContents(contents);
         return remaining == 0;
     }
 }

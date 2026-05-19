@@ -1,13 +1,14 @@
 package me.darkness.crates.crate.animation.impl;
 
+import dev.darkness.utilities.task.SchedulerUtil;
 import dev.darkness.utilities.text.TextUtil;
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
 import me.darkness.crates.CratesPlugin;
-import me.darkness.crates.configuration.Inv.RouletteInvConfig;
+import me.darkness.crates.configuration.inventories.RouletteInvConfig;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.animation.CrateAnimation;
-import me.darkness.crates.crate.animation.RouletteUtil;
+import me.darkness.crates.utils.RouletteUtil;
 import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -17,34 +18,29 @@ import java.util.List;
 
 public final class RouletteAnimation extends CrateAnimation {
 
-    private final int[] slots;
     private List<CrateReward> lane;
     private GuiItem[] laneItems;
     private Gui gui;
 
-    private int localTick = 0, frameDelay = 2, frameTick = 0, index = 0;
-    private boolean stopping = false;
+    private int localTick, frameDelay = 2, frameTick, index;
+    private boolean stopping;
 
     public RouletteAnimation(CratesPlugin plugin, Player player, Crate crate, CrateReward reward) {
         super(plugin, player, crate, reward);
-        List<Integer> cfgSlots = plugin.getConfigService().getRouletteInv().displaySlots;
-        this.slots = (cfgSlots != null ? cfgSlots : List.of(10, 11, 12, 13, 14, 15, 16))
-                .stream().mapToInt(Integer::intValue).toArray();
     }
 
     @Override
     public void start() {
-        this.lane = RouletteUtil.buildLane(crate.getRewards(), reward, 80);
+        this.lane = RouletteUtil.buildLane(crate.getRewards(), 80);
 
-        int centerLocalSlot = slots[slots.length / 2];
-        RouletteUtil.placeWinnerForCenter(this.lane, reward, centerLocalSlot, 48);
+        RouletteUtil.placeWinner(this.lane, reward, 13, 48);
 
         this.laneItems = new GuiItem[lane.size()];
         for (int i = 0; i < lane.size(); i++) {
             laneItems[i] = new GuiItem(lane.get(i).getDisplayItem());
         }
 
-        RouletteInvConfig cfg = plugin.getConfigService().getRouletteInv();
+        RouletteInvConfig cfg = plugin.getConfigService().rouletteInv();
         this.gui = Gui.gui()
                 .title(TextUtil.toComponent(cfg.title))
                 .rows(cfg.rows > 0 ? cfg.rows : 3)
@@ -53,9 +49,12 @@ public final class RouletteAnimation extends CrateAnimation {
 
         RouletteUtil.applyStaticItems(gui, cfg, gui.getRows(), 1);
 
-        for (int s : slots) {
+        for (int s : new int[]{10, 11, 12, 13, 14, 15, 16}) {
             gui.setItem(s, new GuiItem(lane.get(s % lane.size()).getDisplayItem()));
         }
+
+        gui.setCloseGuiAction(event -> cancelAnimation());
+
         this.gui.open(player);
     }
 
@@ -69,7 +68,7 @@ public final class RouletteAnimation extends CrateAnimation {
         if (frameTick >= frameDelay) {
             frameTick = 0;
             index = (index + 1) % lane.size();
-            for (int s : slots) {
+            for (int s : new int[]{10, 11, 12, 13, 14, 15, 16}) {
                 gui.updateItem(s, laneItems[(index + s) % lane.size()]);
             }
             float t = (float)(localTick - 50) / 110;
@@ -87,7 +86,7 @@ public final class RouletteAnimation extends CrateAnimation {
     private void stop() {
         stopping = true;
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 0.9f);
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+        SchedulerUtil.runLater(plugin, () -> {
             finish();
             player.closeInventory();
         }, 50);

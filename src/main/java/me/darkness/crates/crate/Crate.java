@@ -1,9 +1,9 @@
 package me.darkness.crates.crate;
 
+import me.darkness.crates.configuration.LangConfig;
 import me.darkness.crates.crate.animation.AnimationType;
 import me.darkness.crates.crate.reward.CrateReward;
-import me.darkness.crates.configuration.Lang;
-import me.darkness.crates.util.LocationUtil;
+import me.darkness.crates.utils.LocationUtil;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
@@ -17,94 +17,112 @@ public final class Crate {
     private final String displayName;
     private final AnimationType animationType;
     private final ItemStack key;
-    private final Integer keyCustomModelData;
+    private final Integer keyCustomModel;
     private final List<Location> locations;
-    private final List<CrateReward> rewards;
+    private List<CrateReward> rewards;
     private final List<String> hologramLines;
     private final double hologramHeight;
     private final boolean hologramEnabled;
     private final boolean rewardBroadcastEnabled;
     private final double rewardBroadcastMaxChance;
-    private final Lang.MessageEntry rewardBroadcast;
+    private final LangConfig.MessageEntry rewardBroadcast;
 
-    public Crate(
-            String name,
-            String displayName,
-            AnimationType animationType,
-            ItemStack key,
-            Integer keyCustomModelData,
-            List<Location> locations,
-            List<CrateReward> rewards,
-            List<String> hologramLines,
-            double hologramHeight,
-            boolean hologramEnabled,
-            boolean rewardBroadcastEnabled,
-            double rewardBroadcastMaxChance,
-            Lang.MessageEntry rewardBroadcast
-    ) {
-        this.name = name;
-        this.displayName = displayName;
-        this.animationType = animationType;
-        this.key = key;
-        this.keyCustomModelData = keyCustomModelData;
-        this.locations = locations == null ? new ArrayList<>() : new ArrayList<>(locations);
-        this.rewards = rewards == null ? new ArrayList<>() : new ArrayList<>(rewards);
-        this.hologramLines = hologramLines == null ? new ArrayList<>() : new ArrayList<>(hologramLines);
-        this.hologramHeight = hologramHeight;
-        this.hologramEnabled = hologramEnabled;
-        this.rewardBroadcastEnabled = rewardBroadcastEnabled;
-        this.rewardBroadcastMaxChance = rewardBroadcastMaxChance;
-        this.rewardBroadcast = rewardBroadcast;
+    private Crate(Builder builder) {
+        this.name = builder.name;
+        this.displayName = builder.displayName;
+        this.animationType = builder.animationType;
+        this.key = builder.key;
+        this.keyCustomModel = builder.keyCustomModel;
+        this.locations = builder.locations;
+        this.rewards = builder.rewards;
+        this.hologramLines = builder.hologramLines;
+        this.hologramHeight = builder.hologramHeight;
+        this.hologramEnabled = builder.hologramEnabled;
+        this.rewardBroadcastEnabled = builder.rewardBroadcastEnabled;
+        this.rewardBroadcastMaxChance = builder.rewardBroadcastMaxChance;
+        this.rewardBroadcast = builder.rewardBroadcast;
     }
 
-    public String getName() { return this.name; }
-    public String getDisplayName() { return this.displayName; }
-    public AnimationType getAnimationType() { return this.animationType; }
-    public ItemStack getKey() { return this.key; }
-    public Integer getKeyCustomModelData() { return this.keyCustomModelData; }
-    public Location getLocation() { return this.locations.isEmpty() ? null : this.locations.get(0); }
-    public List<Location> getLocations() { return new ArrayList<>(this.locations); }
-    public List<CrateReward> getRewards() { return new ArrayList<>(this.rewards); }
-    public List<String> getHologramLines() { return new ArrayList<>(this.hologramLines); }
-    public double getHologramHeight() { return this.hologramHeight; }
-    public boolean isHologramEnabled() { return this.hologramEnabled; }
-    public boolean isRewardBroadcastEnabled() { return this.rewardBroadcastEnabled; }
-    public double getRewardBroadcastMaxChance() { return this.rewardBroadcastMaxChance; }
-    public Lang.MessageEntry getRewardBroadcast() { return this.rewardBroadcast; }
-
-    public Crate withLocations(List<Location> newLocations) {
-        return new Crate(name, displayName, animationType, key, keyCustomModelData, newLocations, rewards, hologramLines, hologramHeight, hologramEnabled, rewardBroadcastEnabled, rewardBroadcastMaxChance, rewardBroadcast);
+    public static Builder builder(String name) {
+        return new Builder(name);
     }
 
-    public Crate withAddedLocation(Location location) {
-        if (location == null) return this;
-        List<Location> copy = new ArrayList<>(this.locations);
-        if (copy.stream().noneMatch(loc -> LocationUtil.isSameBlock(loc, location))) {
-            copy.add(location);
+    public static final class Builder {
+        private final String name;
+        private String displayName = "";
+        private AnimationType animationType = AnimationType.ROULETTE;
+        private ItemStack key;
+        private Integer keyCustomModel;
+        private List<Location> locations = new ArrayList<>();
+        private List<CrateReward> rewards = new ArrayList<>();
+        private List<String> hologramLines = new ArrayList<>();
+        private double hologramHeight = 2.1;
+        private boolean hologramEnabled = true;
+        private boolean rewardBroadcastEnabled = false;
+        private double rewardBroadcastMaxChance = 100.0;
+        private LangConfig.MessageEntry rewardBroadcast;
+
+        private Builder(String name) {
+            this.name = name;
         }
-        return withLocations(copy);
+
+        public Builder displayName(String displayName) { this.displayName = displayName; return this; }
+        public Builder animationType(AnimationType animationType) { this.animationType = animationType; return this; }
+        public Builder key(ItemStack key) { this.key = key; return this; }
+        public Builder keyCustomModel(Integer keyCustomModel) { this.keyCustomModel = keyCustomModel; return this; }
+        public Builder locations(List<Location> locations) { this.locations = locations; return this; }
+        public Builder rewards(List<CrateReward> rewards) { this.rewards = rewards; return this; }
+        public Builder hologramLines(List<String> hologramLines) { this.hologramLines = hologramLines; return this; }
+        public Builder hologramHeight(double hologramHeight) { this.hologramHeight = hologramHeight; return this; }
+        public Builder hologramEnabled(boolean hologramEnabled) { this.hologramEnabled = hologramEnabled; return this; }
+        public Builder rewardBroadcastEnabled(boolean rewardBroadcastEnabled) { this.rewardBroadcastEnabled = rewardBroadcastEnabled; return this; }
+        public Builder rewardBroadcastMaxChance(double rewardBroadcastMaxChance) { this.rewardBroadcastMaxChance = rewardBroadcastMaxChance; return this; }
+        public Builder rewardBroadcast(LangConfig.MessageEntry rewardBroadcast) { this.rewardBroadcast = rewardBroadcast; return this; }
+
+        public Crate build() {
+            return new Crate(this);
+        }
     }
 
-    public Crate withRemovedLocation(Location location) {
-        if (location == null || this.locations.isEmpty()) return this;
-        List<Location> copy = new ArrayList<>(this.locations);
-        copy.removeIf(loc -> LocationUtil.isSameBlock(loc, location));
-        return withLocations(copy);
+    public String getName() { return name; }
+    public String getDisplayName() { return displayName; }
+    public AnimationType getAnimationType() { return animationType; }
+    public ItemStack getKey() { return key; }
+    public Integer getKeyCustomModel() { return keyCustomModel; }
+    public Location getLocation() { return locations.isEmpty() ? null : locations.get(0); }
+    public List<Location> getLocations() { return locations; }
+    public List<CrateReward> getRewards() { return rewards; }
+    public List<String> getHologramLines() { return hologramLines; }
+    public double getHologramHeight() { return hologramHeight; }
+    public boolean isHologramEnabled() { return hologramEnabled; }
+    public boolean isRewardBroadcastEnabled() { return rewardBroadcastEnabled; }
+    public double getRewardBroadcastMaxChance() { return rewardBroadcastMaxChance; }
+    public LangConfig.MessageEntry getRewardBroadcast() { return rewardBroadcast; }
+
+    public void addLocation(Location location) {
+        if (location == null) return;
+        if (locations.stream().noneMatch(loc -> LocationUtil.isSameBlock(loc, location)))
+            locations.add(location);
     }
 
-    public Crate withRewards(List<CrateReward> newRewards) {
-        return new Crate(name, displayName, animationType, key, keyCustomModelData, locations, newRewards, hologramLines, hologramHeight, hologramEnabled, rewardBroadcastEnabled, rewardBroadcastMaxChance, rewardBroadcast);
+    public void removeLocation(Location location) {
+        if (location == null) return;
+        locations.removeIf(loc -> LocationUtil.isSameBlock(loc, location));
+    }
+
+    public void setRewards(List<CrateReward> newRewards) {
+        this.rewards = newRewards;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Crate crate)) return false;
-        return Objects.equals(this.name, crate.name);
+        if (!(obj instanceof Crate other)) return false;
+        return Objects.equals(name, other.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.name);
+        return Objects.hash(name);
     }
 }

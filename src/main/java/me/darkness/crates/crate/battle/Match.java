@@ -20,8 +20,8 @@ public final class Match {
     private final List<CrateReward> rewardsA = new ArrayList<>();
     private final List<CrateReward> rewardsB = new ArrayList<>();
 
-    private boolean finishedA;
-    private boolean finishedB;
+    private volatile boolean finishedA;
+    private volatile boolean finishedB;
 
     private final AtomicBoolean winnerHandled = new AtomicBoolean(false);
     private UUID winnerUuid;
@@ -47,7 +47,6 @@ public final class Match {
     public List<CrateReward> getRewardsB() { return Collections.unmodifiableList(rewardsB); }
 
     public void setFinished(UUID who) {
-        if (who == null) return;
         if (who.equals(playerA)) finishedA = true;
         if (who.equals(playerB)) finishedB = true;
     }

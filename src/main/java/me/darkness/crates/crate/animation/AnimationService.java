@@ -1,13 +1,14 @@
 package me.darkness.crates.crate.animation;
 
+import dev.darkness.utilities.task.SchedulerUtil;
 import me.darkness.crates.CratesPlugin;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.animation.impl.RouletteAnimation;
 import me.darkness.crates.crate.animation.impl.WithoutAnimation;
 import me.darkness.crates.crate.reward.CrateReward;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -16,14 +17,15 @@ public final class AnimationService {
 
     private final CratesPlugin plugin;
     private final Map<UUID, CrateAnimation> activeAnimations;
-    private org.bukkit.scheduler.BukkitTask globalTask;
+    private BukkitTask globalTask;
 
     public AnimationService(CratesPlugin plugin) {
         this.plugin = plugin;
         this.activeAnimations = new HashMap<>();
-        this.globalTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+        this.globalTask = SchedulerUtil.runTimer(plugin, () -> {
             if (activeAnimations.isEmpty()) return;
-            for (CrateAnimation animation : new ArrayList<>(activeAnimations.values())) {
+            CrateAnimation[] snapshot = activeAnimations.values().toArray(new CrateAnimation[0]);
+            for (CrateAnimation animation : snapshot) {
                 animation.tick();
             }
         }, 1L, 1L);
@@ -39,7 +41,7 @@ public final class AnimationService {
         animation.start();
     }
 
-    public void startCustomAnimation(Player player, CrateAnimation animation) {
+    public void startAnimation(Player player, CrateAnimation animation) {
         if (player == null || animation == null) {
             return;
         }
@@ -73,9 +75,5 @@ public final class AnimationService {
             case ROULETTE -> new RouletteAnimation(this.plugin, player, crate, reward);
             case WITHOUT -> new WithoutAnimation(this.plugin, player, crate, reward);
         };
-    }
-
-    public CrateAnimation getActiveAnimation(Player player) {
-        return this.activeAnimations.get(player.getUniqueId());
     }
 }

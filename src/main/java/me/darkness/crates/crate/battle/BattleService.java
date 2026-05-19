@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class BattleService {
 
@@ -17,6 +18,7 @@ public final class BattleService {
     private final CrateService crateService;
     private final BattleState state;
     private final MatchManager coordinator;
+    private final Map<UUID, BattleCountdown> activeCountdowns = new ConcurrentHashMap<>();
 
     public BattleService(CratesPlugin plugin, CrateService crateService, KeyService keyService) {
         this.plugin = plugin;
@@ -24,15 +26,7 @@ public final class BattleService {
         this.state = new BattleState();
         this.coordinator = new MatchManager(plugin, this.state, keyService);
     }
-
-    public Optional<Crate> findCrate(String name) {
-        return name == null ? Optional.empty() : crateService.getCrate(name);
-    }
-
-    public Collection<Crate> getAllCrates() {
-        return crateService.getAllCrates();
-    }
-
+    
     public BattleSession createSession(UUID owner, UUID opponent) {
         return state.createSession(owner, opponent);
     }
@@ -46,51 +40,60 @@ public final class BattleService {
     }
 
     public boolean createChallenge(Player challenger, Player target, String crateName, int amount) {
-        if (challenger == null || target == null) return false;
         return state.createChallenge(challenger.getUniqueId(), target.getUniqueId(), crateName, amount);
     }
 
     public void cancelChallenge(Challenge challenge, Challenge.Status status) {
-        if (challenge == null) return;
         challenge.setStatus(status);
         state.removeChallenge(challenge);
     }
 
     public boolean isExpired(Challenge challenge) {
-        if (challenge == null) return true;
-        int seconds = Math.max(1, plugin.getConfigService().getCrateConfig().challengeExpire);
-        return System.currentTimeMillis() > challenge.getCreatedAtMillis() + (seconds * 1000L);
+        int seconds = Math.max(1, plugin.getConfigService().config().challengeExpire);
+        return System.currentTimeMillis() > challenge.getCreatedAt() + (seconds * 1000L);
     }
 
     public void startMatch(Challenge challenge) {
-        if (challenge == null) return;
-
-        Optional<Crate> crateOpt = findCrate(challenge.getCrateName());
+        Optional<Crate> crateOpt = crateService.getCrate(challenge.getCrateName());
         if (crateOpt.isEmpty() || crateOpt.get().getRewards().isEmpty()) {
             notifyNoCrate(challenge);
             cancelChallenge(challenge, Challenge.Status.CANCELLED);
             return;
         }
 
-        if (coordinator.startMatch(challenge, this::findCrate)) {
+        if (coordinator.startMatch(challenge, crateService::getCrate)) {
             cancelChallenge(challenge, Challenge.Status.ACCEPTED);
         }
     }
 
     public void startCountdown(Challenge challenge) {
-        if (challenge == null) return;
-
-        int seconds = plugin.getConfigService().getCrateConfig().battleCountdownSeconds;
+        int seconds = plugin.getConfigService().config().battleCountdownSeconds;
         if (seconds <= 0) {
             startMatch(challenge);
             return;
         }
 
-        new BattleCountdown(plugin, challenge, seconds, () -> startMatch(challenge)).start();
+        BattleCountdown countdown = new BattleCountdown(plugin, challenge, seconds, () -> {
+            activeCountdowns.remove(challenge.getChallenger());
+            activeCountdowns.remove(challenge.getTarget());
+            startMatch(challenge);
+        });
+        activeCountdowns.put(challenge.getChallenger(), countdown);
+        activeCountdowns.put(challenge.getTarget(), countdown);
+        countdown.start();
+    }
+
+    public BattleCountdown getCountdown(UUID playerId) {
+        return activeCountdowns.get(playerId);
+    }
+
+    public void removeCountdown(UUID a, UUID b) {
+        activeCountdowns.remove(a);
+        activeCountdowns.remove(b);
     }
 
     public void rouletteFinished(UUID who) {
-        coordinator.rouletteFinished(who, match -> coordinator.finishMassOpen(match, this::findCrate));
+        coordinator.rouletteFinished(who, match -> coordinator.finishMassOpen(match, crateService::getCrate));
     }
 
     public void playerRouletteFinished(UUID viewer, UUID winner) {
@@ -102,7 +105,6 @@ public final class BattleService {
     }
 
     public void cleanupForPlayer(UUID playerId) {
-        if (playerId == null) return;
         state.removeSession(playerId);
         state.removeChallengeForPlayer(playerId);
         state.removeOpenChallengeByCreator(playerId);
@@ -113,8 +115,8 @@ public final class BattleService {
         return state.getOpenChallenges();
     }
 
-    public boolean addOpenChallenge(OpenChallenge challenge) {
-        return state.addOpenChallenge(challenge);
+    public void addOpenChallenge(OpenChallenge challenge) {
+        state.addOpenChallenge(challenge);
     }
 
     public void removeOpenChallenge(UUID id) {
@@ -131,7 +133,6 @@ public final class BattleService {
     public void shutdown() {
         for (Map.Entry<UUID, Match> entry : state.getActiveMatchesCopy().entrySet()) {
             Match match = entry.getValue();
-            if (match == null) continue;
             UUID winner = match.getWinnerUuid() != null ? match.getWinnerUuid() : match.getPlayerA();
             coordinator.playerRouletteFinished(entry.getKey(), winner);
         }
@@ -139,7 +140,7 @@ public final class BattleService {
     }
 
     private void notifyNoCrate(Challenge challenge) {
-        var lang = plugin.getConfigService().getLangConfig();
+        var lang = plugin.getConfigService().lang();
         var ph = Map.of("crate", challenge.getCrateName() == null ? "" : challenge.getCrateName());
 
         Player a = plugin.getServer().getPlayer(challenge.getChallenger());

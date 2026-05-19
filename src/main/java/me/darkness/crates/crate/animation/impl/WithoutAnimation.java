@@ -1,12 +1,13 @@
 package me.darkness.crates.crate.animation.impl;
 
+import dev.darkness.utilities.task.SchedulerUtil;
 import me.darkness.crates.CratesPlugin;
-import me.darkness.crates.configuration.Lang;
+import me.darkness.crates.configuration.LangConfig;
 import me.darkness.crates.crate.Crate;
 import me.darkness.crates.crate.animation.CrateAnimation;
 import me.darkness.crates.crate.reward.CrateReward;
 import me.darkness.crates.crate.reward.RewardRoller;
-import me.darkness.crates.inv.WinInv;
+import me.darkness.crates.inventories.WinInv;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 
@@ -19,10 +20,10 @@ public final class WithoutAnimation extends CrateAnimation {
             return;
         }
 
-        Lang lang = plugin.getConfigService().getLangConfig();
+        LangConfig langConfig = plugin.getConfigService().lang();
 
         if (crate.getRewards().isEmpty()) {
-            lang.crateNoRewards.send(player, Map.of("crate", crate.getDisplayName()));
+            langConfig.crateNoRewards.send(player, Map.of("crate", crate.getDisplayName()));
             player.closeInventory();
             return;
         }
@@ -34,26 +35,27 @@ public final class WithoutAnimation extends CrateAnimation {
 
         if (plugin.getRewardExecutor().countFreeSlots(player) < 1) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-            lang.inventoryFull.send(player);
+            langConfig.inventoryFull.send(player);
             player.closeInventory();
             return;
         }
 
         if (!plugin.getKeyService().tryConsumeKey(player, crate.getName())) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
-            lang.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));
+            langConfig.noKey.send(player, Map.of("crate", crate.getDisplayName(), "need", "1"));
+            player.closeInventory();
             return;
         }
 
         CrateReward reward = RewardRoller.roll(crate.getRewards());
         if (reward == null) {
-            lang.crateNoRewards.send(player, Map.of("crate", crate.getDisplayName()));
+            langConfig.crateNoRewards.send(player, Map.of("crate", crate.getDisplayName()));
             player.closeInventory();
             return;
         }
 
         player.closeInventory();
-        plugin.getAnimationService().startCustomAnimation(player, new WithoutAnimation(plugin, player, crate, reward));
+        plugin.getAnimationService().startAnimation(player, new WithoutAnimation(plugin, player, crate, reward));
     }
 
     public WithoutAnimation(CratesPlugin plugin, Player player, Crate crate, CrateReward reward) {
@@ -62,7 +64,7 @@ public final class WithoutAnimation extends CrateAnimation {
 
     @Override
     public void start() {
-        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> {
+        SchedulerUtil.run(plugin, () -> {
             this.player.closeInventory();
             new WinInv(this.plugin).open(this.player, this.crate, this.reward);
 
@@ -74,7 +76,7 @@ public final class WithoutAnimation extends CrateAnimation {
 
     @Override
     protected void onCancel() {
-        this.plugin.getServer().getScheduler().runTask(this.plugin, () -> {
+        SchedulerUtil.run(plugin, () -> {
             this.player.closeInventory();
             new WinInv(this.plugin).open(this.player, this.crate, this.reward);
         });

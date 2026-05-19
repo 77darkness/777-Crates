@@ -5,21 +5,20 @@ import me.darkness.crates.crate.reward.CrateReward;
 import me.darkness.crates.crate.reward.RewardRoller;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 final class BattleState {
 
-    private final Map<UUID, BattleSession> sessions = new HashMap<>();
-    private final Map<UUID, Challenge> challengesByTarget = new HashMap<>();
-    private final Map<UUID, Challenge> challengesByChallenger = new HashMap<>();
-    private final Map<UUID, Match> activeMatches = new HashMap<>();
-    private final Map<UUID, UUID> matchByPlayer = new HashMap<>();
-    private final Map<UUID, OpenChallenge> openChallenges = new LinkedHashMap<>();
+    private final Map<UUID, BattleSession> sessions = new ConcurrentHashMap<>();
+    private final Map<UUID, Challenge> challengesByTarget = new ConcurrentHashMap<>();
+    private final Map<UUID, Challenge> challengesByChallenger = new ConcurrentHashMap<>();
+    private final Map<UUID, Match> activeMatches = new ConcurrentHashMap<>();
+    private final Map<UUID, UUID> matchByPlayer = new ConcurrentHashMap<>();
+    private final Map<UUID, OpenChallenge> openChallenges = new ConcurrentHashMap<>();
 
     BattleSession createSession(UUID owner, UUID opponent) {
         BattleSession session = new BattleSession(owner, opponent);
@@ -50,14 +49,11 @@ final class BattleState {
     }
 
     void removeChallenge(Challenge challenge) {
-        if (challenge == null) return;
         challengesByChallenger.remove(challenge.getChallenger());
         challengesByTarget.remove(challenge.getTarget());
     }
 
     void removeChallengeForPlayer(UUID playerId) {
-        if (playerId == null) return;
-
         Challenge byTarget = challengesByTarget.remove(playerId);
         if (byTarget != null) {
             challengesByChallenger.remove(byTarget.getChallenger());
@@ -117,7 +113,7 @@ final class BattleState {
     }
 
     Map<UUID, Match> getActiveMatchesCopy() {
-        return new HashMap<>(activeMatches);
+        return new ConcurrentHashMap<>(activeMatches);
     }
 
     Collection<OpenChallenge> getOpenChallenges() {

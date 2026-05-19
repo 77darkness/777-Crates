@@ -19,7 +19,7 @@ public class CrateConfig extends OkaeriConfig {
 
     public boolean rewardBroadcastEnabled = true;
     public double rewardBroadcastMaxChance = 100.0;
-    public Lang.MessageEntry rewardBroadcast = Lang.MessageEntry.chat(
+    public LangConfig.MessageEntry rewardBroadcast = LangConfig.MessageEntry.chat(
             "&8» &fGracz &#00FF00{player} &fwylosował &#FFFF00{item} &fze skrzynki &#00FF00{crate}&f!"
     );
 
@@ -30,17 +30,7 @@ public class CrateConfig extends OkaeriConfig {
         public String material;
         public String name;
         public List<String> lore;
-        public Integer customModelData = null;
-
-        public KeyItem() {
-            this.lore = new ArrayList<>(List.of(
-                "&8ɪɴꜰᴏʀᴍᴀᴄᴊᴇ",
-                "&f",
-                "&8× &fᴋʟᴜᴄᴢ ᴢᴀᴋᴜᴘɪꜱᴢ ɴᴀ &#00FF00www.777code.pl",
-                "&f",
-                "&#00FF00→ /warp skrzynki"
-            ));
-        }
+        public Integer customModelData;
     }
 
     public static class Hologram extends OkaeriConfig {

@@ -2,7 +2,7 @@ package me.darkness.crates.crate.reward;
 
 import dev.darkness.utilities.text.TextUtil;
 import me.darkness.crates.CratesPlugin;
-import me.darkness.crates.configuration.Lang;
+import me.darkness.crates.configuration.LangConfig;
 import me.darkness.crates.crate.Crate;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 public final class RewardExecutor {
 
@@ -34,44 +35,36 @@ public final class RewardExecutor {
         if (reward == null || player == null) return;
 
         if (reward.shouldGiveItem() && reward.getRewardItem() != null) {
-            giveItem(player, reward.getRewardItem());
+            player.getInventory().addItem(reward.getRewardItem().clone());
         }
 
         if (!reward.getCommands().isEmpty()) {
             executeCommands(player, reward.getCommands());
         }
 
-        Lang lang = this.plugin.getConfigService().getLangConfig();
-        if (lang == null) return;
+        LangConfig langConfig = this.plugin.getConfigService().lang();
+        if (langConfig == null) return;
 
         String itemName = getItemName(reward);
-        lang.rewardWon.send(player, Map.of("item", itemName));
+        String crateName = crate != null ? crate.getDisplayName() : "";
+        langConfig.rewardWon.send(player, Map.of("item", itemName, "crate", crateName));
         broadcastReward(crate, player, reward, itemName);
     }
 
     private void broadcastReward(Crate crate, Player player, CrateReward reward, String itemName) {
         if (crate == null) return;
         if (!crate.isRewardBroadcastEnabled() || reward.getChance() > crate.getRewardBroadcastMaxChance()) return;
-        Lang.MessageEntry broadcastEntry = crate.getRewardBroadcast();
+        LangConfig.MessageEntry broadcastEntry = crate.getRewardBroadcast();
         if (broadcastEntry == null) return;
 
         Map<String, String> placeholders = Map.of(
                 "player", player.getName(),
                 "item", itemName,
-                "crate", crate.getName(),
+                "crate", crate.getDisplayName(),
                 "chance", String.valueOf(reward.getChance())
         );
 
         Bukkit.getOnlinePlayers().forEach(p -> broadcastEntry.send(p, placeholders));
-    }
-
-    private void giveItem(Player player, ItemStack item) {
-        Map<Integer, ItemStack> leftover = player.getInventory().addItem(item);
-        if (!leftover.isEmpty()) {
-            Lang lang = this.plugin.getConfigService().getLangConfig();
-            lang.inventoryFull.send(player);
-            leftover.values().forEach(i -> player.getWorld().dropItemNaturally(player.getLocation(), i));
-        }
     }
 
     private void executeCommands(Player player, List<String> commands) {
@@ -87,7 +80,7 @@ public final class RewardExecutor {
 
         ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.displayName() != null) {
-            return LegacyComponentSerializer.legacyAmpersand().serialize(meta.displayName());
+            return LegacyComponentSerializer.legacyAmpersand().serialize(Objects.requireNonNull(meta.displayName()));
         }
 
         return capitalizeWords(item.getType().name().toLowerCase(Locale.ROOT).replace('_', ' '));

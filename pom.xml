@@ -25,6 +25,9 @@
                 <version>3.13.0</version>
                 <configuration>
                     <release>${java.version}</release>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -121,7 +124,12 @@
         <dependency>
             <groupId>com.github.777Code-pl</groupId>
             <artifactId>777-utilities</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.777Code-pl</groupId>
+            <artifactId>777-commands</artifactId>
+            <version>1.0.1</version>
         </dependency>
     </dependencies>
 </project>

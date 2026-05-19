@@ -15,7 +15,7 @@ public abstract class CrateAnimation {
     protected final CrateReward reward;
     protected BukkitTask task;
 
-    private boolean finished = false;
+    private volatile boolean finished = false;
 
     protected CrateAnimation(CratesPlugin plugin, Player player, Crate crate, CrateReward reward) {
         this.plugin = plugin;
@@ -34,6 +34,8 @@ public abstract class CrateAnimation {
             this.task = null;
         }
     }
+
+    public boolean isFinished() { return finished; }
 
     public boolean isAnimation(Inventory inventory) {
         return false;

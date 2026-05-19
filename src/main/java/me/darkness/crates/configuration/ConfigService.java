@@ -1,27 +1,23 @@
 package me.darkness.crates.configuration;
 
 import eu.okaeri.configs.ConfigManager;
+import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
 import eu.okaeri.configs.yaml.bukkit.serdes.SerdesBukkit;
 import me.darkness.crates.CratesPlugin;
-import me.darkness.crates.configuration.Inv.EditInvConfig;
-import me.darkness.crates.configuration.Inv.PreviewInvConfig;
-import me.darkness.crates.configuration.Inv.RouletteInvConfig;
-import me.darkness.crates.configuration.Inv.WinInvConfig;
-import me.darkness.crates.configuration.Inv.MassOpenInvConfig;
-import me.darkness.crates.configuration.Inv.AmountInvConfig;
-import me.darkness.crates.configuration.Inv.ConfirmInvConfig;
-import me.darkness.crates.configuration.Inv.SelectInvConfig;
-import me.darkness.crates.configuration.Inv.OpenBattleInvConfig;
+import me.darkness.crates.configuration.inventories.*;
+import org.bukkit.plugin.Plugin;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public final class ConfigService {
 
-    private final CratesPlugin plugin;
+    private final Plugin plugin;
 
-    private Config config;
-    private Lang lang;
+    private PluginConfig pluginConfig;
+    private LangConfig langConfig;
     private PreviewInvConfig previewInvConfig;
     private EditInvConfig editInvConfig;
     private RouletteInvConfig rouletteInvConfig;
@@ -30,102 +26,60 @@ public final class ConfigService {
     private SelectInvConfig selectInvConfig;
     private AmountInvConfig amountInvConfig;
     private ConfirmInvConfig confirmInvConfig;
-    private OpenBattleInvConfig openBattleInvConfig;
+    private BattleInvConfig battleInvConfig;
 
     public ConfigService(CratesPlugin plugin) {
         this.plugin = plugin;
     }
 
-    public void load() {
-        this.config = this.createConfig(Config.class, "config.yml");
-        this.lang = this.createConfig(Lang.class, "messages.yml");
-
-        this.getGuiFolder();
-        this.previewInvConfig = this.createConfig(PreviewInvConfig.class, "gui" + File.separator + "preview.yml");
-        this.editInvConfig = this.createConfig(EditInvConfig.class, "gui" + File.separator + "edit.yml");
-        this.rouletteInvConfig = this.createConfig(RouletteInvConfig.class, "gui" + File.separator + "roulette.yml");
-        this.winInvConfig = this.createConfig(WinInvConfig.class, "gui" + File.separator + "win.yml");
-        this.massOpenInvConfig = this.createConfig(MassOpenInvConfig.class, "gui" + File.separator + "mass-open.yml");
-        this.selectInvConfig = this.createConfig(SelectInvConfig.class, "gui" + File.separator + "select.yml");
-        this.amountInvConfig = this.createConfig(AmountInvConfig.class, "gui" + File.separator + "amount.yml");
-        this.confirmInvConfig = this.createConfig(ConfirmInvConfig.class, "gui" + File.separator + "confirm.yml");
-        this.openBattleInvConfig = this.createConfig(OpenBattleInvConfig.class, "gui" + File.separator + "open-battle.yml");
-    }
-
-    public void reload() {
-        this.config.load();
-        this.lang.load();
-        this.previewInvConfig.load();
-        this.editInvConfig.load();
-        this.rouletteInvConfig.load();
-        this.winInvConfig.load();
-        this.massOpenInvConfig.load();
-        this.selectInvConfig.load();
-        this.amountInvConfig.load();
-        this.confirmInvConfig.load();
-        this.openBattleInvConfig.load();
-    }
-
-    private void getGuiFolder() {
-        File guiFolder = new File(this.plugin.getDataFolder(), "gui");
-        if (!guiFolder.exists()) {
-            boolean ok = guiFolder.mkdirs();
-            if (!ok && !guiFolder.exists()) {
-                this.plugin.getLogger().warning("blad podczas tworzenia folderu konfiguracji inv " + guiFolder.getAbsolutePath());
-            }
+    @SuppressWarnings("deprecation")
+    private <T extends OkaeriConfig> T load(Class<T> type, String path) {
+        File file = new File(plugin.getDataFolder(), path);
+        try {
+            Files.createDirectories(file.getParentFile().toPath());
+        } catch (IOException e) {
+            plugin.getLogger().warning("Nie można utworzyć folderu konfigguracji dla: " + path);
         }
-    }
 
-    private <T extends eu.okaeri.configs.OkaeriConfig> T createConfig(Class<T> configClass, String path) {
-        return ConfigManager.create(configClass, (it) -> {
-            it.withConfigurer(new YamlBukkitConfigurer(), new SerdesBukkit());
-            it.withBindFile(new File(this.plugin.getDataFolder(), path));
-            it.saveDefaults();
-            it.load(true);
+        return ConfigManager.create(type, it -> {
+            it.withConfigurer(new YamlBukkitConfigurer());
+            it.withSerdesPack(registry -> registry.register(new SerdesBukkit()));
+            it.withBindFile(file.toPath());
+            if (!file.exists()) it.saveDefaults();
+            it.load(false);
         });
     }
 
-    public Config getCrateConfig() {
-        return this.config;
+    private <T extends OkaeriConfig> T gui(Class<T> type, String name) {
+        return load(type, "gui/" + name);
     }
 
-    public Lang getLangConfig() {
-        return this.lang;
+    public void load() {
+        this.pluginConfig = load(PluginConfig.class, "config.yml");
+        this.langConfig = load(LangConfig.class, "messages.yml");
+
+        this.previewInvConfig = gui(PreviewInvConfig.class, "preview.yml");
+        this.editInvConfig = gui(EditInvConfig.class, "edit.yml");
+        this.rouletteInvConfig = gui(RouletteInvConfig.class, "roulette.yml");
+        this.winInvConfig = gui(WinInvConfig.class, "win.yml");
+        this.massOpenInvConfig = gui(MassOpenInvConfig.class, "mass-open.yml");
+        this.selectInvConfig = gui(SelectInvConfig.class, "select.yml");
+        this.amountInvConfig = gui(AmountInvConfig.class, "amount.yml");
+        this.confirmInvConfig = gui(ConfirmInvConfig.class, "confirm.yml");
+        this.battleInvConfig = gui(BattleInvConfig.class, "open-battle.yml");
     }
 
-    public PreviewInvConfig getPreviewInv() {
-        return this.previewInvConfig;
-    }
+    public void reload() { load(); }
 
-    public EditInvConfig getEditInv() {
-        return this.editInvConfig;
-    }
-
-    public RouletteInvConfig getRouletteInv() {
-        return this.rouletteInvConfig;
-    }
-
-    public WinInvConfig getWinInv() {
-        return this.winInvConfig;
-    }
-
-    public MassOpenInvConfig getMassOpenInv() {
-        return this.massOpenInvConfig;
-    }
-
-    public SelectInvConfig getBattleCrateSelectInv() {
-        return this.selectInvConfig;
-    }
-
-    public AmountInvConfig getBattleAmountInv() {
-        return this.amountInvConfig;
-    }
-
-    public ConfirmInvConfig getBattleConfirmInv() {
-        return this.confirmInvConfig;
-    }
-
-    public OpenBattleInvConfig getOpenBattleInv() {
-        return this.openBattleInvConfig;
-    }
+    public PluginConfig config() { return pluginConfig; }
+    public LangConfig lang() { return langConfig; }
+    public PreviewInvConfig previewInv() { return previewInvConfig; }
+    public EditInvConfig editInv() { return editInvConfig; }
+    public RouletteInvConfig rouletteInv() { return rouletteInvConfig; }
+    public WinInvConfig winInv() { return winInvConfig; }
+    public MassOpenInvConfig massOpenInv() { return massOpenInvConfig; }
+    public SelectInvConfig selectInv() { return selectInvConfig; }
+    public AmountInvConfig amountInv() { return amountInvConfig; }
+    public ConfirmInvConfig confirmInv() { return confirmInvConfig; }
+    public BattleInvConfig openBattleInv() { return battleInvConfig; }
 }

@@ -14,4 +14,9 @@ public final class SlottedCrateReward extends CrateReward {
     }
 
     public int getSlot() { return this.slot; }
+
+    @Override
+    public SlottedCrateReward withChance(double newChance) {
+        return new SlottedCrateReward(this.slot, getDisplayItem(), getRewardItem(), getCommands(), newChance, getType());
+    }
 }
